@@ -1,0 +1,6 @@
+binance.history:
+  socket:
+    enabled: true
+  history:
+    enabled: true
+crypto.history.enabled: true
