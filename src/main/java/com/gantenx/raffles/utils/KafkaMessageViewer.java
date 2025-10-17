@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.utils;
+package com.gantenx.raffles.utils;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -16,8 +16,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import com.gantenx.phthonus.constants.Constant;
-import com.gantenx.phthonus.enums.Environment;
+import com.gantenx.raffles.constants.Constant;
+import com.gantenx.raffles.enums.Environment;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -47,10 +47,10 @@ public class KafkaMessageViewer {
         try (AdminClient adminClient = AdminClient.create(props)) {
             NewTopic newTopic = new NewTopic(topic, numPartitions, replicationFactor);
             adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
-            System.out.println("成功创建 Kafka Topic: " + topic);
+            log.info("成功创建 Kafka Topic: " + topic);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof TopicExistsException) {
-                System.out.println("Topic 已存在: " + topic);
+                log.info("Topic 已存在: " + topic);
             } else {
                 throw new RuntimeException("创建 Topic 失败: " + topic, e);
             }
@@ -70,7 +70,7 @@ public class KafkaMessageViewer {
         try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(Collections.singletonList(topic));
             AtomicInteger messageCount = new AtomicInteger(0);
-            System.out.println("开始查询Kafka主题: " + topic);
+            log.info("开始查询Kafka主题: " + topic);
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
                 if (records.isEmpty()) {

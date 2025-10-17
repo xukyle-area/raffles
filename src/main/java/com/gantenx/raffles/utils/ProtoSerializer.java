@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.utils;
+package com.gantenx.raffles.utils;
 
 import org.apache.kafka.common.serialization.Serializer;
 import com.google.protobuf.GeneratedMessageV3;

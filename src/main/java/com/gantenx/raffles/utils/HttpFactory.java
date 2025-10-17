@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.utils;
+package com.gantenx.raffles.utils;
 
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;

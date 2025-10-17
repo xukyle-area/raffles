@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.enums;
+package com.gantenx.raffles.enums;
 
 public enum Symbol {
     BTC_USDT(1, "BTC", "USDT"),

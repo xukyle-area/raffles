@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.constants;
+package com.gantenx.raffles.constants;
 
 public class Constant {
     public final static String BINANCE_SUBSCRIBE = "SUBSCRIBE";

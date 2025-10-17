@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.enums;
+package com.gantenx.raffles.enums;
 
 import lombok.Getter;
 

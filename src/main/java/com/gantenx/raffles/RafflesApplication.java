@@ -1,4 +1,4 @@
-package com.gantenx.phthonus;
+package com.gantenx.raffles;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,9 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @EnableScheduling
-@SpringBootApplication(scanBasePackages = {"com.gantenx.phthonus"})
-public class PhthonusApplication {
+@SpringBootApplication(scanBasePackages = {"com.gantenx.raffles"})
+public class RafflesApplication {
     public static void main(String[] args) {
-        SpringApplication.run(PhthonusApplication.class, args);
+        SpringApplication.run(RafflesApplication.class, args);
     }
 }

@@ -1,4 +1,4 @@
-package com.gantenx.phthonus.utils;
+package com.gantenx.raffles.utils;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
