@@ -1,5 +1,12 @@
 package com.gantenx.raffles.sink;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
+import org.springframework.stereotype.Service;
 import com.gantenx.raffles.biz.BizConfig;
 import com.gantenx.raffles.biz.BizConfigManager;
 import com.gantenx.raffles.biz.consists.BizType;
@@ -9,14 +16,6 @@ import com.gantenx.raffles.biz.ongoingcdd.OngoingCddSinkBuilder;
 import com.gantenx.raffles.biz.openaccount.OpenAccountSinkBuilder;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.types.Row;
-import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -50,7 +49,8 @@ public class KafkaSink implements SinkService {
         BizConfig.SinkConfig sinkConfig = BizConfigManager.getSinkConfig(bizType);
         this.checkType(sinkConfig);
         BizConfig.Kafka kafkaConfig = sinkConfig.getKafka();
-        RuleSink sinkFunction = new RuleSink(rule, sinkMap.get(bizType), kafkaConfig.getServers(), kafkaConfig.getTopic());
-        ste.toRetractStream(table, Row.class).addSink(sinkFunction).name(rule.getCode() + "_sink");
+        RuleSink sinkFunction =
+                new RuleSink(rule, sinkMap.get(bizType), kafkaConfig.getServers(), kafkaConfig.getTopic());
+        ste.toRetractStream(table, Row.class).addSink(sinkFunction).name(rule.getName() + "_sink");
     }
 }

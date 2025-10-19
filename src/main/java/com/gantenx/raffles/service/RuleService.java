@@ -1,24 +1,23 @@
 package com.gantenx.raffles.service;
 
-import com.gantenx.raffles.biz.BizConfigManager;
-import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.model.dao.CategoryDao;
-import com.gantenx.raffles.model.dao.FeatureDao;
-import com.gantenx.raffles.model.dao.RuleDao;
-import com.gantenx.raffles.model.tables.generated.ComplianceCategory;
-import com.gantenx.raffles.model.tables.generated.ComplianceFeature;
-import com.gantenx.raffles.model.tables.generated.ComplianceRule;
-import com.gantenx.raffles.util.GsonUtils;
-import com.gantenx.raffles.util.SqlUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.gantenx.raffles.biz.BizConfigManager;
+import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.dao.CategoryDao;
+import com.gantenx.raffles.model.dao.RuleDao;
+import com.gantenx.raffles.model.dao.SqlTemplateDao;
+import com.gantenx.raffles.model.entity.Category;
+import com.gantenx.raffles.model.entity.Rule;
+import com.gantenx.raffles.model.entity.SqlTemplate;
+import com.gantenx.raffles.util.GsonUtils;
+import com.gantenx.raffles.util.SqlUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -26,7 +25,7 @@ public class RuleService {
     @Autowired
     private RuleDao ruleDao;
     @Autowired
-    private FeatureDao featureDao;
+    private SqlTemplateDao sqlTemplateDao;
     @Autowired
     private CategoryDao categoryDao;
     @Autowired
@@ -34,9 +33,9 @@ public class RuleService {
 
     public boolean isDuplicateRule(RuleFlinkSql rule) {
         String expression = rule.getExecutableSql() + rule.getParams();
-        String latestExpression = ruleStatusService.getLatestExpression(rule.getCode());
+        String latestExpression = ruleStatusService.getLatestExpression(rule.getName());
         Integer version = rule.getVersion();
-        Integer latestVersion = ruleStatusService.getLatestVersion(rule.getCode());
+        Integer latestVersion = ruleStatusService.getLatestVersion(rule.getName());
         boolean expressionEqual = Objects.equals(expression, latestExpression);
         boolean versionEqual = Objects.equals(version, latestVersion);
         return expressionEqual && versionEqual;
@@ -61,22 +60,22 @@ public class RuleService {
      * rule.params 为 sql 模板参数
      * 通过 rule.params 与 feature.expression 生成可执行 sql
      */
-    private RuleFlinkSql toFlinkSqlRule(ComplianceRule complianceRule) {
+    private RuleFlinkSql toFlinkSqlRule(Rule complianceRule) {
         RuleFlinkSql flinkRule = new RuleFlinkSql();
         flinkRule.setId(complianceRule.getId());
         flinkRule.setCategoryId(complianceRule.getCategoryId());
-        flinkRule.setCode(complianceRule.getCode());
+        flinkRule.setName(complianceRule.getCode());
         flinkRule.setVersion(complianceRule.getVersion());
         flinkRule.setParams(complianceRule.getParams());
         flinkRule.setParamsDesc(complianceRule.getParamsDesc());
-        ComplianceCategory category = categoryDao.selectByCategoryId(flinkRule.getCategoryId());
+        Category category = categoryDao.selectByCategoryId(flinkRule.getCategoryId());
         if (category != null) {
-            flinkRule.setCategoryCode(category.getCode());
-            flinkRule.setBizType(BizConfigManager.getBizType(category.getCode()));
+            flinkRule.setCategoryName(category.getName());
+            flinkRule.setBizType(BizConfigManager.getBizType(category.getName()));
         }
-        String expression = complianceRule.getExpression();
-        ComplianceFeature feature;
-        if (StringUtils.isEmpty(expression) || Objects.isNull(feature = featureDao.selectByFeatureCode(expression))) {
+        int sqlTemplateId = complianceRule.getSqlTemplateId();
+        SqlTemplate feature = sqlTemplateDao.selectById(sqlTemplateId);
+        if (Objects.isNull(feature)) {
             log.error("rule without expression, ruleCode:{}", complianceRule.getCode());
             return flinkRule;
         }

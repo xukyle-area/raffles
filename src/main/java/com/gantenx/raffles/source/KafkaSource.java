@@ -1,5 +1,8 @@
 package com.gantenx.raffles.source;
 
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.springframework.stereotype.Service;
 import com.gantenx.raffles.biz.BizConfig;
 import com.gantenx.raffles.biz.BizConfigManager;
 import com.gantenx.raffles.biz.consists.BizType;
@@ -8,9 +11,6 @@ import com.gantenx.raffles.biz.openaccount.OpenAccountInput;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.util.FindInSet;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service

@@ -2,6 +2,7 @@ package com.gantenx.raffles.biz.consists;
 
 public enum Direction {
     SOURCE(1, "input"), SINK(2, "output");
+
     private final int id;
     private final String code;
 

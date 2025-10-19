@@ -1,10 +1,9 @@
 package com.gantenx.raffles.biz.openaccount;
 
+import java.sql.Date;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.sql.Date;
 
 @Data
 @NoArgsConstructor

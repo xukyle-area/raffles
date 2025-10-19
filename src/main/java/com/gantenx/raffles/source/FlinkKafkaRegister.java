@@ -1,6 +1,9 @@
 package com.gantenx.raffles.source;
 
-import com.gantenx.raffles.util.FlinkTypeUtils;
+import static org.apache.flink.table.api.Expressions.$;
+import java.io.Serializable;
+import java.sql.Timestamp;
+import java.time.Duration;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
@@ -16,12 +19,7 @@ import org.apache.flink.table.api.ApiExpression;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.time.Duration;
-
-import static org.apache.flink.table.api.Expressions.$;
+import com.gantenx.raffles.util.FlinkTypeUtils;
 
 
 public class FlinkKafkaRegister implements Serializable {
@@ -29,21 +27,17 @@ public class FlinkKafkaRegister implements Serializable {
     private static final long serialVersionUID = 3600595263156225931L;
 
     public static void registerKafkaTable(StreamExecutionEnvironment env, StreamTableEnvironment tableEnv,
-                                          KafkaTableSource schema, String groupId) {
+            KafkaTableSource schema, String groupId) {
         RowTypeInfo rowTypeInfo = FlinkTypeUtils.rowTypeInfoFromClazz(schema.getClazz());
-        JsonRowDeserializationSchema jsonRowDeserializationSchema = (new JsonRowDeserializationSchema.Builder(rowTypeInfo))
-                .ignoreParseErrors()
-                .build();
-        KafkaSource<Row> kafkaSource = KafkaSource.<Row>builder()
-                .setBootstrapServers(schema.getServers())
-                .setTopics(schema.getTopic())
-                .setGroupId(groupId)
+        JsonRowDeserializationSchema jsonRowDeserializationSchema =
+                (new JsonRowDeserializationSchema.Builder(rowTypeInfo)).ignoreParseErrors().build();
+        KafkaSource<Row> kafkaSource = KafkaSource.<Row>builder().setBootstrapServers(schema.getServers())
+                .setTopics(schema.getTopic()).setGroupId(groupId)
                 .setStartingOffsets(OffsetsInitializer.committedOffsets(OffsetResetStrategy.LATEST))
-                .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(jsonRowDeserializationSchema))
-                .build();
+                .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(jsonRowDeserializationSchema)).build();
         String timeAttributeField = schema.getTimeField();
-        WatermarkStrategy<Row> watermarkStrategy =
-                WatermarkStrategy.forBoundedOutOfOrderness(Duration.ofDays(ObjectUtils.defaultIfNull(schema.getMaxDelay(), 0)));
+        WatermarkStrategy<Row> watermarkStrategy = WatermarkStrategy
+                .forBoundedOutOfOrderness(Duration.ofDays(ObjectUtils.defaultIfNull(schema.getMaxDelay(), 0)));
         watermarkStrategy = watermarkStrategy.withIdleness(Duration.ofMinutes(1));
         if (StringUtils.isNotBlank(timeAttributeField)) {
             watermarkStrategy = watermarkStrategy.withTimestampAssigner(
@@ -62,8 +56,7 @@ public class FlinkKafkaRegister implements Serializable {
                             // flink stream转table时RowTime会强制转到UTC时区，手动恢复毫秒数
                             return mills;
                         }
-                    }
-            );
+                    });
         }
 
         DataStream<Row> sourceStream = env.fromSource(kafkaSource, watermarkStrategy, schema.getTable());

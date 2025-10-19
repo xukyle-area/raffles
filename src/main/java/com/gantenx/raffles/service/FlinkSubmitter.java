@@ -1,11 +1,17 @@
 package com.gantenx.raffles.service;
 
-import com.gantenx.raffles.biz.FlinkConfig;
-import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.util.FileListing;
-import com.gantenx.raffles.util.ScheduledThreadPool;
-import com.gantenx.raffles.util.TypesafeUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -27,19 +33,11 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
+import com.gantenx.raffles.biz.FlinkConfig;
+import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.util.FileListing;
+import com.gantenx.raffles.util.ScheduledThreadPool;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
@@ -48,7 +46,7 @@ public class FlinkSubmitter {
     // 所需要的 jars 文件, 通过 dist.sh 将 resources/lib 下的文件打包到镜像中
     private final static List<String> JAR_FILES = FileListing.getPaths("/app/flink-lib");
 
-    private final FlinkConfig flinkConfig = TypesafeUtils.getBean(FlinkConfig.class, "flink-config");
+    private final FlinkConfig flinkConfig = new FlinkConfig();
 
     private RestClusterClient<UUID> commonClusterClient;
 
@@ -108,9 +106,10 @@ public class FlinkSubmitter {
      * @param sink          自定义注册sink
      * @param sources       自定义注册数据源
      */
-    public boolean submitJob(RuleFlinkSql sql, @Nullable String savepointPath, TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
-                             TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
-        Configuration config = this.buildConfiguration(sql.getCode(), savepointPath);
+    public boolean submitJob(RuleFlinkSql sql, @Nullable String savepointPath,
+            TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
+            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
+        Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
         RemoteStreamEnvironment rse = this.buildRemoteStreamEnvironment(config);
         StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());
 
@@ -124,10 +123,10 @@ public class FlinkSubmitter {
             try {
                 jobID = completableFuture.get(9, TimeUnit.MINUTES);
             } catch (TimeoutException | InterruptedException | ExecutionException e) {
-                log.error("Failed to submit job: sql id: {}, sql code: {}", sql.getId(), sql.getCode(), e);
+                log.error("Failed to submit job: sql id: {}, sql code: {}", sql.getId(), sql.getName(), e);
                 return false;
             }
-            log.info("sql id: {}, sql code: {} submit success, jobID: {}", sql.getId(), sql.getCode(), jobID);
+            log.info("sql id: {}, sql code: {} submit success, jobID: {}", sql.getId(), sql.getName(), jobID);
             return true;
         } catch (Exception e) {
             log.error("Error while creating RestClusterClient: {}", e.getMessage(), e);
@@ -141,8 +140,8 @@ public class FlinkSubmitter {
     public String cancelJobWithSavepoint(String code, JobID jobId) {
         try {
             String savepointDirectory = flinkConfig.getSavepointPath() + "/" + code;
-            CompletableFuture<String> completableFuture = commonClusterClient.cancelWithSavepoint(jobId,
-                    savepointDirectory, SavepointFormatType.CANONICAL);
+            CompletableFuture<String> completableFuture =
+                    commonClusterClient.cancelWithSavepoint(jobId, savepointDirectory, SavepointFormatType.CANONICAL);
             String savepointPath = completableFuture.get(9, TimeUnit.MINUTES);
             log.info("cancel job with savepoint, jobId: {} success, savepointPath: {}", jobId, savepointPath);
             return savepointPath;
@@ -197,13 +196,17 @@ public class FlinkSubmitter {
      */
     private RemoteStreamEnvironment buildRemoteStreamEnvironment(Configuration configuration) {
         List<String> jars = configuration.getOptional(PipelineOptions.JARS).orElse(new ArrayList<>());
-        String savepointPath = configuration.getOptional(SavepointConfigOptions.SAVEPOINT_PATH).orElse(StringUtils.EMPTY);
+        String savepointPath =
+                configuration.getOptional(SavepointConfigOptions.SAVEPOINT_PATH).orElse(StringUtils.EMPTY);
 
-        SavepointRestoreSettings settings = StringUtils.isNotBlank(savepointPath) ? SavepointRestoreSettings.forPath(savepointPath, Boolean.FALSE) : null;
-        RemoteStreamEnvironment remoteStreamEnvironment = new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getPort(),
-                configuration, jars.toArray(new String[0]), new URL[]{}, settings);
+        SavepointRestoreSettings settings =
+                StringUtils.isNotBlank(savepointPath) ? SavepointRestoreSettings.forPath(savepointPath, Boolean.FALSE)
+                        : null;
+        RemoteStreamEnvironment remoteStreamEnvironment = new RemoteStreamEnvironment(flinkConfig.getHost(),
+                flinkConfig.getPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
         remoteStreamEnvironment.enableCheckpointing(1000L * 60L * 10L, CheckpointingMode.EXACTLY_ONCE);
-        remoteStreamEnvironment.setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(15), Time.minutes(2)));
+        remoteStreamEnvironment
+                .setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(15), Time.minutes(2)));
         remoteStreamEnvironment.setParallelism(1);
         return remoteStreamEnvironment;
     }
@@ -258,11 +261,10 @@ public class FlinkSubmitter {
      */
     private boolean isRecoverableError(Throwable e) {
         // 检查是否为连接关闭相关的异常，可以尝试恢复连接
-        if (e instanceof java.net.SocketException
-                || e instanceof java.net.SocketTimeoutException
+        if (e instanceof java.net.SocketException || e instanceof java.net.SocketTimeoutException
                 || e instanceof java.io.EOFException
-                || (e instanceof org.apache.flink.runtime.rest.util.RestClientException &&
-                e.getCause() instanceof java.net.SocketException)) {
+                || (e instanceof org.apache.flink.runtime.rest.util.RestClientException
+                        && e.getCause() instanceof java.net.SocketException)) {
             log.error("Detected connection issue: {}", e.getMessage());
             return true;
         }

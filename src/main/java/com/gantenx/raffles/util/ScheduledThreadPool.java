@@ -1,10 +1,9 @@
 package com.gantenx.raffles.util;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ScheduledThreadPool {
@@ -22,11 +21,11 @@ public class ScheduledThreadPool {
     }
 
     // 私有构造函数，防止外部实例化
-    private ScheduledThreadPool() {
-    }
+    private ScheduledThreadPool() {}
 
     public static void scheduleWithFixedDelay(Runnable task, long fixedDelay, long initialDelay, String taskName) {
-        scheduledExecutor.scheduleWithFixedDelay(ScheduleJobUtil.wrapWithLogging(task, taskName), initialDelay, fixedDelay, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleWithFixedDelay(ScheduleJobUtil.wrapWithLogging(task, taskName), initialDelay,
+                fixedDelay, TimeUnit.SECONDS);
     }
 
 
@@ -38,7 +37,8 @@ public class ScheduledThreadPool {
      * @param taskName   任务名称
      */
     public static void scheduleWithFixedDelay(Runnable task, long fixedDelay, String taskName) {
-        scheduledExecutor.scheduleWithFixedDelay(ScheduleJobUtil.wrapWithLogging(task, taskName), ZERO_INITIAL_DELAY, fixedDelay, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleWithFixedDelay(ScheduleJobUtil.wrapWithLogging(task, taskName), ZERO_INITIAL_DELAY,
+                fixedDelay, TimeUnit.SECONDS);
     }
 
     /**
@@ -50,7 +50,8 @@ public class ScheduledThreadPool {
      * @param taskName     任务名称
      */
     public static void scheduleAtFixedRate(Runnable task, long initialDelay, long period, String taskName) {
-        scheduledExecutor.scheduleAtFixedRate(ScheduleJobUtil.wrapWithLogging(task, taskName), initialDelay, period, TimeUnit.SECONDS);
+        scheduledExecutor.scheduleAtFixedRate(ScheduleJobUtil.wrapWithLogging(task, taskName), initialDelay, period,
+                TimeUnit.SECONDS);
     }
 
     // 关闭定时调度线程池

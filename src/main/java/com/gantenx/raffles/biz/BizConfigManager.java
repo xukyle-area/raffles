@@ -1,17 +1,15 @@
 package com.gantenx.raffles.biz;
 
-import com.gantenx.raffles.biz.consists.BizType;
-import com.gantenx.raffles.biz.consists.DataSourceType;
-import com.gantenx.raffles.biz.consists.Direction;
-import com.gantenx.raffles.util.GsonUtils;
-import com.gantenx.raffles.util.TypesafeUtils;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import com.gantenx.raffles.biz.consists.BizType;
+import com.gantenx.raffles.biz.consists.DataSourceType;
+import com.gantenx.raffles.biz.consists.Direction;
+import com.gantenx.raffles.util.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BizConfigManager {
@@ -22,7 +20,7 @@ public class BizConfigManager {
     static {
         Arrays.stream(BizType.values()).forEach(bizType -> {
             String configPath = CMP_PREFIX + bizType.getCode();
-            BizConfig config = TypesafeUtils.getBean(BizConfig.class, configPath);
+            BizConfig config = new BizConfig();
             log.info("Load biz config: {} -> {}", bizType, GsonUtils.toJson(config));
             if (!config.isEnable()) {
                 log.info("Skip biz config: {} -> {}", bizType, GsonUtils.toJson(config));

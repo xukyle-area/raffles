@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 
 public class SQLTableExtractor {
 
-    private static final Pattern WITH_PATTERN = Pattern.compile("WITH\\s+([a-zA-Z0-9_]+)\\s+AS|\\),\\s*([a-zA-Z0-9_]+)\\s+AS");
+    private static final Pattern WITH_PATTERN =
+            Pattern.compile("WITH\\s+([a-zA-Z0-9_]+)\\s+AS|\\),\\s*([a-zA-Z0-9_]+)\\s+AS");
     private static final Pattern TABLE_PATTERN = Pattern.compile("(FROM|JOIN)\\s+([a-zA-Z0-9_]+)");
 
     public static Set<String> extractExternalTables(String sqlQuery) {

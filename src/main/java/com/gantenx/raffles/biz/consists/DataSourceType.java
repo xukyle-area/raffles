@@ -1,8 +1,7 @@
 package com.gantenx.raffles.biz.consists;
 
 public enum DataSourceType {
-    KAFKA("kafka"),
-    MYSQL("mysql");
+    KAFKA("kafka"), MYSQL("mysql");
 
     private final String code;
 

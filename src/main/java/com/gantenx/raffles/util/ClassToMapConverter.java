@@ -1,13 +1,12 @@
 package com.gantenx.raffles.util;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClassToMapConverter {

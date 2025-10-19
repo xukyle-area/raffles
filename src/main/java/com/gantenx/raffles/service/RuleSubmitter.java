@@ -1,14 +1,9 @@
 package com.gantenx.raffles.service;
 
-import com.gantenx.raffles.biz.BizConfigManager;
-import com.gantenx.raffles.biz.consists.BizType;
-import com.gantenx.raffles.biz.consists.DataSourceType;
-import com.gantenx.raffles.biz.consists.Direction;
-import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.sink.SinkService;
-import com.gantenx.raffles.source.SourceService;
-import com.gantenx.raffles.util.GsonUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.runtime.client.JobStatusMessage;
@@ -18,11 +13,15 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.gantenx.raffles.biz.BizConfigManager;
+import com.gantenx.raffles.biz.consists.BizType;
+import com.gantenx.raffles.biz.consists.DataSourceType;
+import com.gantenx.raffles.biz.consists.Direction;
+import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.sink.SinkService;
+import com.gantenx.raffles.source.SourceService;
+import com.gantenx.raffles.util.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -34,7 +33,8 @@ public class RuleSubmitter {
     @Resource
     private RuleService ruleService;
 
-    private final Map<BizType, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql>> sourceMap = new HashMap<>();
+    private final Map<BizType, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql>> sourceMap =
+            new HashMap<>();
     private final Map<BizType, TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql>> sinkMap = new HashMap<>();
 
     @Autowired
@@ -44,7 +44,8 @@ public class RuleSubmitter {
 
         for (BizType bizType : BizType.values()) {
             Map<Direction, DataSourceType> map = BizConfigManager.getDataSourceType(bizType);
-            Optional.ofNullable(sources.get(map.get(Direction.SOURCE))).ifPresent(o -> this.sourceMap.put(bizType, o::source));
+            Optional.ofNullable(sources.get(map.get(Direction.SOURCE)))
+                    .ifPresent(o -> this.sourceMap.put(bizType, o::source));
             Optional.ofNullable(sinks.get(map.get(Direction.SINK))).ifPresent(o -> this.sinkMap.put(bizType, o::sink));
         }
     }
@@ -59,7 +60,7 @@ public class RuleSubmitter {
      */
     public void checkAndCancelJobs() {
         List<RuleFlinkSql> allRules = ruleService.getRules();
-        Set<String> flinkCode = allRules.stream().map(RuleFlinkSql::getCode).collect(Collectors.toSet());
+        Set<String> flinkCode = allRules.stream().map(RuleFlinkSql::getName).collect(Collectors.toSet());
         List<JobStatusMessage> activeJobs = flinkSubmitter.getActiveJobs();
         for (JobStatusMessage activeJob : activeJobs) {
             String jobName = activeJob.getJobName();
@@ -86,7 +87,7 @@ public class RuleSubmitter {
         List<RuleFlinkSql> rules = ruleService.getRules();
 
         rules.stream().filter(rule -> bizType.equals(rule.getBizType()))
-                .filter(rule -> batch || !activeNames.contains(rule.getCode()) || !ruleService.isDuplicateRule(rule))
+                .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
                 .peek(rule -> log.info("after filter, final submit rule:{}", GsonUtils.toJson(rule)))
                 .forEach(this::submitSingleRule);
     }
@@ -99,8 +100,7 @@ public class RuleSubmitter {
      */
     public void submitSingleRule(RuleFlinkSql rule) {
         log.info("submitSingleRule, rule:{}", rule);
-        String ruleCode = rule.getCode();
-        // TODO 如果没有获取到savepoint，后面需要支持有默认的savepoint地址
+        String ruleCode = rule.getName();
         String savepoint = this.cancelJobs(ruleCode);
         BizType bizType = rule.getBizType();
         TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink = sinkMap.get(bizType);
@@ -111,7 +111,6 @@ public class RuleSubmitter {
             log.info("rule submit success, ruleCode:{}", ruleCode);
             this.updateRuleStatus(rule);
         }
-        // TODO 如果提交失败，需要支持重试或者报警
     }
 
     /**
@@ -121,11 +120,13 @@ public class RuleSubmitter {
      */
     private String cancelJobs(String code) {
         // 筛选出所有与当前 code 匹配的任务
-        List<JobStatusMessage> jobs = flinkSubmitter.getActiveJobs().stream().filter(job -> job.getJobName().equals(code)).collect(Collectors.toList());
+        List<JobStatusMessage> jobs = flinkSubmitter.getActiveJobs().stream()
+                .filter(job -> job.getJobName().equals(code)).collect(Collectors.toList());
 
         String savepoint = null;
         for (JobStatusMessage job : jobs) {
-            log.info("cancel job, job name:{}, jobId: {}, jobState: {}", job.getJobName(), job.getJobId(), job.getJobState());
+            log.info("cancel job, job name:{}, jobId: {}, jobState: {}", job.getJobName(), job.getJobId(),
+                    job.getJobState());
             JobID jobId = job.getJobId();
             if (JobStatus.RUNNING.equals(job.getJobState())) {
                 savepoint = flinkSubmitter.cancelJobWithSavepoint(job.getJobName(), jobId);
@@ -145,7 +146,7 @@ public class RuleSubmitter {
      * 上面字段变动之后，任务会被取消，再重新提交
      */
     private void updateRuleStatus(RuleFlinkSql rule) {
-        String key = rule.getCode();
+        String key = rule.getName();
         ruleStatusService.setLatestExpression(key, rule.getExecutableSql() + rule.getParams());
         ruleStatusService.setLatestVersion(key, rule.getVersion());
     }

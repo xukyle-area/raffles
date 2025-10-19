@@ -1,11 +1,5 @@
 package com.gantenx.raffles.util;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.types.Row;
-
 import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -14,6 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.types.Row;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
 public class FlinkTypeUtils {
     public static RowTypeInfo rowTypeInfoFromClazz(Class<?> clazz) {

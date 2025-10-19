@@ -1,10 +1,9 @@
 package com.gantenx.raffles.util;
 
-import com.google.common.collect.Sets;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.functions.ScalarFunction;
-
-import java.util.Set;
+import com.google.common.collect.Sets;
 
 /**
  * Created on 2020/6/3

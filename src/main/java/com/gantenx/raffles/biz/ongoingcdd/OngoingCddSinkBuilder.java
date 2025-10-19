@@ -1,12 +1,12 @@
 package com.gantenx.raffles.biz.ongoingcdd;
 
+import java.io.Serializable;
+import java.util.Map;
+import org.apache.commons.collections.MapUtils;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.sink.SinkBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.MapUtils;
 
-import java.io.Serializable;
-import java.util.Map;
 @Slf4j
 public class OngoingCddSinkBuilder implements SinkBuilder, Serializable {
 

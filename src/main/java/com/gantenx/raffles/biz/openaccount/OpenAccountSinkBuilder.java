@@ -1,15 +1,14 @@
 package com.gantenx.raffles.biz.openaccount;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Map;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.sink.SinkBuilder;
 import com.gantenx.raffles.util.GsonUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Map;
 
 @Slf4j
 public class OpenAccountSinkBuilder implements SinkBuilder, Serializable {
@@ -21,7 +20,7 @@ public class OpenAccountSinkBuilder implements SinkBuilder, Serializable {
         ruleScoreOutput.setAccount(account);
         double score = MapUtils.getDoubleValue(item, "score");
         ruleScoreOutput.setScore(score);
-        ruleScoreOutput.setRuleCode(rule.getCode());
+        ruleScoreOutput.setRuleCode(rule.getName());
         ruleScoreOutput.setRuleExpr(rule.getExecutableSql());
         ruleScoreOutput.setCustomerId(MapUtils.getString(item, "transaction_id"));
         ruleScoreOutput.setCreateTime(System.currentTimeMillis());
@@ -39,7 +38,8 @@ public class OpenAccountSinkBuilder implements SinkBuilder, Serializable {
                     if (entry.getValue() != null) {
                         String valueStr = entry.getValue().toString();
                         if (StringUtils.isNotEmpty(valueStr)) {
-                            if (BigDecimal.valueOf(Double.parseDouble(valueStr)).compareTo(BigDecimal.valueOf(score)) == 0) {
+                            if (BigDecimal.valueOf(Double.parseDouble(valueStr))
+                                    .compareTo(BigDecimal.valueOf(score)) == 0) {
                                 key = entry.getKey();
                                 break;
                             }

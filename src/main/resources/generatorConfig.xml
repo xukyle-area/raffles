@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <!-- 注意：不需要指定classPathEntry，因为Maven插件会自动处理classpath -->
+
+    <context id="DB2Tables" targetRuntime="MyBatis3">
+        <!-- 去除自动生成的注释 -->
+        <commentGenerator>
+            <property name="suppressAllComments" value="true" />
+            <property name="suppressDate" value="true" />
+        </commentGenerator>
+
+        <!-- 数据库链接URL，用户名、密码 -->
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver"
+            connectionURL="jdbc:mysql://localhost:3306/raffles?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Shanghai"
+            userId="root"
+            password="rootpassword">
+            <!-- 针对MySQL8的兼容性配置 -->
+            <property name="nullCatalogMeansCurrent" value="true" />
+            <property name="useInformationSchema" value="true" />
+        </jdbcConnection>
+
+        <!-- 类型转换 -->
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="false" />
+            <!-- 是否使用BigDecimal，false可自动转换类型 -->
+        </javaTypeResolver>
+
+        <!-- 生成模型的包名和位置-->
+        <javaModelGenerator targetPackage="com.gantenx.raffles.model.entity"
+            targetProject="src/main/java">
+            <property name="enableSubPackages" value="true" />
+            <property name="trimStrings" value="true" />
+        </javaModelGenerator>
+
+        <!-- 生成映射文件的包名和位置-->
+        <sqlMapGenerator targetPackage="mapper"
+            targetProject="src/main/resources">
+            <property name="enableSubPackages" value="true" />
+        </sqlMapGenerator>
+
+        <!-- 生成DAO的包名和位置-->
+        <javaClientGenerator type="XMLMAPPER"
+            targetPackage="com.gantenx.raffles.model.mapper"
+            targetProject="src/main/java">
+            <property name="enableSubPackages" value="true" />
+        </javaClientGenerator>
+
+        <!-- 要生成的表 tableName是数据库中的表名或视图名 domainObjectName是实体类名-->
+
+        <!-- 类目表 - 用于规则分类管理 -->
+        <table tableName="category" domainObjectName="Category">
+            <generatedKey column="id" sqlStatement="JDBC" />
+        </table>
+
+        <!-- 规则表 - 存储各种检查规则 -->
+        <table tableName="rule" domainObjectName="Rule">
+            <generatedKey column="id" sqlStatement="JDBC" />
+        </table>
+
+        <!-- SQL 模板表 - 存储 SQL 检查模板 -->
+        <table tableName="sql_template" domainObjectName="SqlTemplate">
+            <generatedKey column="id" sqlStatement="JDBC" />
+        </table>
+
+        <!-- Flink 表 DDL 表 - 存储 Flink 数据表定义 -->
+        <table tableName="flink_table_ddl" domainObjectName="FlinkTableDDL">
+            <generatedKey column="id" sqlStatement="JDBC" />
+        </table>
+
+    </context>
+</generatorConfiguration>

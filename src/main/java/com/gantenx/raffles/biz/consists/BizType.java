@@ -1,9 +1,7 @@
 package com.gantenx.raffles.biz.consists;
 
 public enum BizType {
-    OPEN_ACCOUNT("openaccount"),
-    DORMANT("dormant"),
-    ONGOING_CDD("ongoing_cdd"),;
+    OPEN_ACCOUNT("openaccount"), DORMANT("dormant"), ONGOING_CDD("ongoing_cdd"),;
 
     BizType(String code) {
         this.code = code;

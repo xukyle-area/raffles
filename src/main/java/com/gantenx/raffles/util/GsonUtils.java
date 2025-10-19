@@ -1,11 +1,10 @@
 package com.gantenx.raffles.util;
 
+import java.lang.reflect.Type;
+import java.util.Map;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
-import java.lang.reflect.Type;
-import java.util.Map;
 
 public class GsonUtils {
 
@@ -20,7 +19,6 @@ public class GsonUtils {
     }
 
     public static Map<String, Object> toMap(String json) {
-        return GsonUtils.fromJson(json, new TypeToken<Map<String, Object>>() {
-        }.getType());
+        return GsonUtils.fromJson(json, new TypeToken<Map<String, Object>>() {}.getType());
     }
 }
