@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.utils.FileListing;
-import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -54,7 +53,7 @@ public class FlinkSubmitter {
     @PostConstruct
     public void init() throws Exception {
         this.initClient();
-        ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
+        // ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
     }
 
     /**
@@ -108,16 +107,75 @@ public class FlinkSubmitter {
     public boolean submitJob(RuleFlinkSql sql, @Nullable String savepointPath,
             TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
             TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
+        log.info("=== START submitJob for sql: {}, id: {} ===", sql.getName(), sql.getId());
+
+        log.info("Step 1: Building configuration...");
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
+        log.info("Step 1: Configuration built successfully, config: {}", config.toMap());
+
+        log.info("Step 2: Building RemoteStreamEnvironment...");
         RemoteStreamEnvironment rse = this.buildRemoteStreamEnvironment(config);
-        StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());
+        log.info("Step 2: RemoteStreamEnvironment built successfully");
 
-        sources.accept(rse, ste, sql);
-        Table table = ste.sqlQuery(sql.getExecutableSql());
-        sink.accept(ste, table, sql);
+        log.info("Step 3: Creating StreamTableEnvironment...");
+        StreamTableEnvironment ste;
+        try {
+            log.info("Step 3.1: Creating EnvironmentSettings...");
+            EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
+            log.info("Step 3.2: EnvironmentSettings created, now creating StreamTableEnvironment...");
+            log.info("Step 3.3: About to call StreamTableEnvironment.create()...");
+            ste = StreamTableEnvironment.create(rse, settings);
+            log.info("Step 3.4: StreamTableEnvironment.create() completed successfully");
+            log.info("Step 3: StreamTableEnvironment created successfully");
+        } catch (Exception e) {
+            log.error("Step 3: Failed to create StreamTableEnvironment", e);
+            return false;
+        }
 
+        log.info("Step 4: Registering sources...");
+        try {
+            sources.accept(rse, ste, sql);
+            log.info("Step 4: Sources registered successfully");
+        } catch (Exception e) {
+            log.error("Step 4: Failed to register sources", e);
+            return false;
+        }
+
+        log.info("Step 5: Executing SQL query...");
+        Table table;
+        try {
+            table = ste.sqlQuery(sql.getExecutableSql());
+            log.info("Step 5: SQL query executed successfully");
+        } catch (Exception e) {
+            log.error("Step 5: Failed to execute SQL query", e);
+            return false;
+        }
+
+        log.info("Step 6: Registering sink...");
+        try {
+            sink.accept(ste, table, sql);
+            log.info("Step 6: Sink registered successfully");
+        } catch (Exception e) {
+            log.error("Step 6: Failed to register sink", e);
+            return false;
+        }
+
+        log.info("Step 7: Building job graph...");
+        JobGraph jobGraph;
+        try {
+            jobGraph = this.buildJobGraph(rse, config);
+            log.info("Step 7: Job graph built successfully");
+        } catch (Exception e) {
+            log.error("Step 7: Failed to build job graph", e);
+            return false;
+        }
+
+        log.info("Step 8: Creating RestClusterClient and submitting job...");
         try (RestClusterClient<UUID> client = new RestClusterClient<>(config, UUID.randomUUID())) {
-            CompletableFuture<JobID> completableFuture = client.submitJob(this.buildJobGraph(rse, config));
+            log.info("Step 8.1: RestClusterClient created, submitting job...");
+            CompletableFuture<JobID> completableFuture = client.submitJob(jobGraph);
+            log.info("Step 8.2: Job submitted, waiting for result...");
+
             JobID jobID;
             try {
                 jobID = completableFuture.get(9, TimeUnit.MINUTES);
@@ -125,7 +183,8 @@ public class FlinkSubmitter {
                 log.error("Failed to submit job: sql id: {}, sql code: {}", sql.getId(), sql.getName(), e);
                 return false;
             }
-            log.info("sql id: {}, sql code: {} submit success, jobID: {}", sql.getId(), sql.getName(), jobID);
+            log.info("=== SUCCESS: sql id: {}, sql code: {} submit success, jobID: {} ===", sql.getId(), sql.getName(),
+                    jobID);
             return true;
         } catch (Exception e) {
             log.error("Error while creating RestClusterClient: {}", e.getMessage(), e);
