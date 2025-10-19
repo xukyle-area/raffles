@@ -26,3 +26,23 @@ flink:
   host: localhost
   port: 8081
   savepoint-path: /tmp/flink-savepoints
+
+# 业务分类配置
+raffles:
+  category:
+    configs:
+      calculate:
+        enable: true
+        batch: false
+        source:
+          type: kafka
+          kafka:
+            servers: localhost:9092
+            topic: calculate-input
+        sink:
+          type: mysql
+          mysql:
+            driver: com.mysql.cj.jdbc.Driver
+            jdbc-url: jdbc:mysql://localhost:3306/raffles_result
+            username: root
+            password: password
