@@ -17,7 +17,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import com.gantenx.raffles.constants.Constant;
-import com.gantenx.raffles.enums.Environment;
+import com.gantenx.raffles.constants.enums.Environment;
 import lombok.extern.slf4j.Slf4j;
 
 /**

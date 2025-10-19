@@ -9,7 +9,7 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.util.FlinkTypeUtils;
+import com.gantenx.raffles.utils.FlinkTypeUtils;
 import lombok.extern.slf4j.Slf4j;
 
 

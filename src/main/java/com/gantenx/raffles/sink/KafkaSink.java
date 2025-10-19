@@ -13,7 +13,7 @@ import com.gantenx.raffles.biz.consists.BizType;
 import com.gantenx.raffles.biz.consists.DataSourceType;
 import com.gantenx.raffles.biz.dormant.DormantSinkBuilder;
 import com.gantenx.raffles.biz.ongoingcdd.OngoingCddSinkBuilder;
-import com.gantenx.raffles.biz.openaccount.OpenAccountSinkBuilder;
+import com.gantenx.raffles.config.calculate.CalculateSinkBuilder;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,7 +27,7 @@ public class KafkaSink implements SinkService {
         Set<BizType> activeBizTypes = BizConfigManager.getActiveBizTypes();
         if (activeBizTypes.contains(BizType.OPEN_ACCOUNT)) {
             log.info("OpenAccountSinkBuilder");
-            sinkMap.put(BizType.OPEN_ACCOUNT, new OpenAccountSinkBuilder());
+            sinkMap.put(BizType.OPEN_ACCOUNT, new CalculateSinkBuilder());
         }
         if (activeBizTypes.contains(BizType.DORMANT)) {
             log.info("DormantSinkBuilder");

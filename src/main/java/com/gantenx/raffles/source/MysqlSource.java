@@ -15,10 +15,10 @@ import com.gantenx.raffles.biz.consists.DataSourceType;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.model.dao.TableDDLDao;
 import com.gantenx.raffles.model.entity.FlinkTableDDL;
-import com.gantenx.raffles.util.ClassToMapConverter;
-import com.gantenx.raffles.util.GsonUtils;
-import com.gantenx.raffles.util.SQLTableExtractor;
-import com.gantenx.raffles.util.SqlUtils;
+import com.gantenx.raffles.utils.ClassToMapConverter;
+import com.gantenx.raffles.utils.GsonUtils;
+import com.gantenx.raffles.utils.SQLTableExtractor;
+import com.gantenx.raffles.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

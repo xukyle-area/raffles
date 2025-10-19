@@ -32,11 +32,12 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.gantenx.raffles.biz.FlinkConfig;
+import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.util.FileListing;
-import com.gantenx.raffles.util.ScheduledThreadPool;
+import com.gantenx.raffles.utils.FileListing;
+import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -46,7 +47,8 @@ public class FlinkSubmitter {
     // 所需要的 jars 文件, 通过 dist.sh 将 resources/lib 下的文件打包到镜像中
     private final static List<String> JAR_FILES = FileListing.getPaths("/app/flink-lib");
 
-    private final FlinkConfig flinkConfig = new FlinkConfig();
+    @Autowired
+    private FlinkConfig flinkConfig;
 
     private RestClusterClient<UUID> commonClusterClient;
 

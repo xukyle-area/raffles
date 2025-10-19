@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import com.gantenx.raffles.model.entity.FlinkTableDDL;
 import com.gantenx.raffles.model.entity.FlinkTableDDLExample;
 import com.gantenx.raffles.model.mapper.FlinkTableDDLMapper;
-import com.gantenx.raffles.util.ListUtils;
+import com.gantenx.raffles.utils.ListUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

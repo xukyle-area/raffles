@@ -20,7 +20,7 @@ import com.gantenx.raffles.biz.consists.Direction;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.sink.SinkService;
 import com.gantenx.raffles.source.SourceService;
-import com.gantenx.raffles.util.GsonUtils;
+import com.gantenx.raffles.utils.GsonUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

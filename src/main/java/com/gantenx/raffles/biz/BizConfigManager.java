@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.gantenx.raffles.biz.consists.BizType;
 import com.gantenx.raffles.biz.consists.DataSourceType;
 import com.gantenx.raffles.biz.consists.Direction;
-import com.gantenx.raffles.util.GsonUtils;
+import com.gantenx.raffles.utils.GsonUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

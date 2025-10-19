@@ -7,9 +7,9 @@ import com.gantenx.raffles.biz.BizConfig;
 import com.gantenx.raffles.biz.BizConfigManager;
 import com.gantenx.raffles.biz.consists.BizType;
 import com.gantenx.raffles.biz.consists.DataSourceType;
-import com.gantenx.raffles.biz.openaccount.OpenAccountInput;
+import com.gantenx.raffles.config.calculate.CalculateInput;
 import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.util.FindInSet;
+import com.gantenx.raffles.utils.FindInSet;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -44,7 +44,7 @@ public class KafkaSource implements SourceService {
         kafkaTableSource.setTopic(inputKafka.getTopic());
         kafkaTableSource.setMaxDelay(1);
         kafkaTableSource.setStartupMode(GROUP_OFFSETS);
-        kafkaTableSource.setClazz(OpenAccountInput.class);
+        kafkaTableSource.setClazz(CalculateInput.class);
         return kafkaTableSource;
     }
 }

@@ -8,15 +8,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.biz.BizConfigManager;
+import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.model.RuleFlinkSql;
-import com.gantenx.raffles.model.dao.CategoryDao;
 import com.gantenx.raffles.model.dao.RuleDao;
 import com.gantenx.raffles.model.dao.SqlTemplateDao;
-import com.gantenx.raffles.model.entity.Category;
 import com.gantenx.raffles.model.entity.Rule;
 import com.gantenx.raffles.model.entity.SqlTemplate;
-import com.gantenx.raffles.util.GsonUtils;
-import com.gantenx.raffles.util.SqlUtils;
+import com.gantenx.raffles.utils.GsonUtils;
+import com.gantenx.raffles.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -26,8 +25,7 @@ public class RuleService {
     private RuleDao ruleDao;
     @Autowired
     private SqlTemplateDao sqlTemplateDao;
-    @Autowired
-    private CategoryDao categoryDao;
+
     @Autowired
     private RuleStatusService ruleStatusService;
 
@@ -68,7 +66,7 @@ public class RuleService {
         flinkRule.setVersion(complianceRule.getVersion());
         flinkRule.setParams(complianceRule.getParams());
         flinkRule.setParamsDesc(complianceRule.getParamsDesc());
-        Category category = categoryDao.selectByCategoryId(flinkRule.getCategoryId());
+        Category category = com.gantenx.raffles.config.Category.getCategory(complianceRule.getCategoryId());
         if (category != null) {
             flinkRule.setCategoryName(category.getName());
             flinkRule.setBizType(BizConfigManager.getBizType(category.getName()));

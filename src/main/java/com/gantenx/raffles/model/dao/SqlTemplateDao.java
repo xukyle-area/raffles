@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import com.gantenx.raffles.model.entity.SqlTemplate;
 import com.gantenx.raffles.model.entity.SqlTemplateExample;
 import com.gantenx.raffles.model.mapper.SqlTemplateMapper;
-import com.gantenx.raffles.util.ListUtils;
+import com.gantenx.raffles.utils.ListUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

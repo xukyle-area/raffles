@@ -6,7 +6,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import com.gantenx.raffles.util.GsonUtils;
+import com.gantenx.raffles.utils.GsonUtils;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;

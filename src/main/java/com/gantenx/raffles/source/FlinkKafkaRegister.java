@@ -19,7 +19,7 @@ import org.apache.flink.table.api.ApiExpression;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import com.gantenx.raffles.util.FlinkTypeUtils;
+import com.gantenx.raffles.utils.FlinkTypeUtils;
 
 
 public class FlinkKafkaRegister implements Serializable {
