@@ -1,10 +1,7 @@
 package com.gantenx.raffles.service;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -90,7 +87,7 @@ public class FlinkSubmitter {
      * @return 当前正在运行的任务列表
      */
     public List<JobStatusMessage> getActiveJobs() {
-        return this.activeJobs;
+        return this.activeJobs == null ? Collections.emptyList() : this.activeJobs;
     }
 
     /**

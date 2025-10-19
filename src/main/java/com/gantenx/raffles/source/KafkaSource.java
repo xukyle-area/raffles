@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class KafkaSource implements SourceService {
 
-    private static final String OAUTH_USER_INFORMATION_TABLE = "oauth_user_information";
+    private static final String KAFKA_TABLE = "kafka_table";
     private static final String GROUP_OFFSETS = "group-offsets";
 
     @Override
@@ -37,7 +37,7 @@ public class KafkaSource implements SourceService {
      */
     private KafkaTableSource buildKafkaSource(CategoryConfig.Kafka inputKafka) {
         KafkaTableSource kafkaTableSource = new KafkaTableSource();
-        kafkaTableSource.setTable(OAUTH_USER_INFORMATION_TABLE);
+        kafkaTableSource.setTable(KAFKA_TABLE);
         kafkaTableSource.setServers(inputKafka.getServers());
         kafkaTableSource.setTopic(inputKafka.getTopic());
         kafkaTableSource.setMaxDelay(1);

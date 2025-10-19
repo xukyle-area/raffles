@@ -43,9 +43,7 @@ raffles:
             servers: localhost:9092
             topic: calculate-input
         sink:
-          type: mysql
-          mysql:
-            driver: com.mysql.cj.jdbc.Driver
-            jdbc-url: jdbc:mysql://localhost:3306/raffles_result
-            username: root
-            password: password
+          type: kafka
+          kafka:
+            servers: localhost:9092
+            topic: calculate-output
