@@ -8,10 +8,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.gantenx.raffles.biz.BizConfig;
-import com.gantenx.raffles.biz.BizConfigManager;
-import com.gantenx.raffles.biz.consists.BizType;
-import com.gantenx.raffles.biz.consists.DataSourceType;
+import com.gantenx.raffles.config.CategoryConfig;
+import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.model.dao.TableDDLDao;
 import com.gantenx.raffles.model.entity.FlinkTableDDL;
@@ -29,14 +27,14 @@ public class MysqlSource implements SourceService {
     private TableDDLDao tableDDLDao;
 
     @Override
-    public DataSourceType getDataSourceType() {
-        return DataSourceType.MYSQL;
+    public DataType getDataType() {
+        return DataType.MYSQL;
     }
 
     @Override
     public void source(StreamExecutionEnvironment env, StreamTableEnvironment ste, RuleFlinkSql rule) {
-        BizType bizType = rule.getBizType();
-        BizConfig.SourceConfig sourceConfig = BizConfigManager.getSourceConfig(bizType);
+        CategoryConfig categoryConfig = rule.getCategoryConfig();
+        CategoryConfig.DataTypeConfig sourceConfig = categoryConfig.getSourceConfig();
         this.checkType(sourceConfig);
 
         String executableSql = rule.getExecutableSql();
@@ -44,7 +42,7 @@ public class MysqlSource implements SourceService {
         ddls.forEach(ste::executeSql);
     }
 
-    public List<String> getDDLs(@Nonnull String executableSql, BizConfig.Mysql mysqlConfig) {
+    public List<String> getDDLs(@Nonnull String executableSql, CategoryConfig.Mysql mysqlConfig) {
         List<String> ddls = new ArrayList<>();
         List<String> tableNames = new ArrayList<>(SQLTableExtractor.extractExternalTables(executableSql));
         Map<String, Object> mysqlParamMap = ClassToMapConverter.convertToMap(mysqlConfig);

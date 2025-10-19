@@ -2,19 +2,19 @@ package com.gantenx.raffles.source;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import com.gantenx.raffles.biz.BizConfig;
-import com.gantenx.raffles.biz.consists.DataSourceType;
+import com.gantenx.raffles.config.CategoryConfig;
+import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.RuleFlinkSql;
 
 public interface SourceService {
-    DataSourceType getDataSourceType();
+    DataType getDataType();
 
     void source(StreamExecutionEnvironment env, StreamTableEnvironment ste, RuleFlinkSql rule);
 
-    default void checkType(BizConfig.SourceConfig sourceConfig) {
-        if (!this.getDataSourceType().getCode().equals(sourceConfig.getType())) {
-            throw new RuntimeException("source type not match, expect: " + this.getDataSourceType().getCode()
-                    + ", actual: " + sourceConfig.getType());
+    default void checkType(CategoryConfig.DataTypeConfig sourceConfig) {
+        if (!this.getDataType().equals(sourceConfig.getDataType())) {
+            throw new RuntimeException("source type not match, expect: " + this.getDataType().getCode() + ", actual: "
+                    + sourceConfig.getDataType().getCode());
         }
     }
 }

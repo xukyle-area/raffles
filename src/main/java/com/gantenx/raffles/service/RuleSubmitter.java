@@ -13,10 +13,12 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.gantenx.raffles.biz.BizConfigManager;
-import com.gantenx.raffles.biz.consists.BizType;
-import com.gantenx.raffles.biz.consists.DataSourceType;
-import com.gantenx.raffles.biz.consists.Direction;
+import com.gantenx.raffles.config.Category;
+import com.gantenx.raffles.config.CategoryConfig;
+import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
+import com.gantenx.raffles.config.ConfigManager;
+import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.config.consists.Direction;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.sink.SinkService;
 import com.gantenx.raffles.source.SourceService;
@@ -33,20 +35,27 @@ public class RuleSubmitter {
     @Resource
     private RuleService ruleService;
 
-    private final Map<BizType, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql>> sourceMap =
+    private final Map<Category, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql>> sourceMap =
             new HashMap<>();
-    private final Map<BizType, TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql>> sinkMap = new HashMap<>();
+    private final Map<Category, TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql>> sinkMap = new HashMap<>();
 
     @Autowired
     public void sourceAndSinkServices(Set<SourceService> sourcesSet, Set<SinkService> sinksSet) {
-        Map<DataSourceType, SourceService> sources = this.buildServiceMap(sourcesSet, SourceService::getDataSourceType);
-        Map<DataSourceType, SinkService> sinks = this.buildServiceMap(sinksSet, SinkService::getDataSourceType);
+        Map<DataType, SourceService> sources = this.buildServiceMap(sourcesSet, SourceService::getDataType);
+        Map<DataType, SinkService> sinks = this.buildServiceMap(sinksSet, SinkService::getDataType);
 
-        for (BizType bizType : BizType.values()) {
-            Map<Direction, DataSourceType> map = BizConfigManager.getDataSourceType(bizType);
+        for (Category category : Category.values()) {
+            CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
+            DataTypeConfig sourceConfig = categoryConfig.getSourceConfig();
+            DataTypeConfig sinkConfig = categoryConfig.getSinkConfig();
+
+            Map<Direction, DataType> map = new HashMap<>();
+            map.put(Direction.SOURCE, sourceConfig.getDataType());
+            map.put(Direction.SINK, sinkConfig.getDataType());
+
             Optional.ofNullable(sources.get(map.get(Direction.SOURCE)))
-                    .ifPresent(o -> this.sourceMap.put(bizType, o::source));
-            Optional.ofNullable(sinks.get(map.get(Direction.SINK))).ifPresent(o -> this.sinkMap.put(bizType, o::sink));
+                    .ifPresent(o -> this.sourceMap.put(category, o::source));
+            Optional.ofNullable(sinks.get(map.get(Direction.SINK))).ifPresent(o -> this.sinkMap.put(category, o::sink));
         }
     }
 
@@ -77,16 +86,18 @@ public class RuleSubmitter {
      *
      * @param bizType 业务类型的枚举
      */
-    public void submitRules(BizType bizType) {
-        String category = BizConfigManager.getCategory(bizType);
-        boolean batch = BizConfigManager.isBatch(bizType);
-        log.info("submitRules, bizType:{}, category:{}", bizType, category);
+    public void submitRules(Category category) {
+        CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);;
+
+
+        boolean batch = categoryConfig.isBatch();
+        log.info("submitRules, bizType:{}, category:{}", category.getName(), category);
 
         Set<String> activeNames = flinkSubmitter.getActiveJobNames();
 
         List<RuleFlinkSql> rules = ruleService.getRules();
 
-        rules.stream().filter(rule -> bizType.equals(rule.getBizType()))
+        rules.stream().filter(rule -> category.equals(rule.getCategory()))
                 .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
                 .peek(rule -> log.info("after filter, final submit rule:{}", GsonUtils.toJson(rule)))
                 .forEach(this::submitSingleRule);
@@ -102,9 +113,9 @@ public class RuleSubmitter {
         log.info("submitSingleRule, rule:{}", rule);
         String ruleCode = rule.getName();
         String savepoint = this.cancelJobs(ruleCode);
-        BizType bizType = rule.getBizType();
-        TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink = sinkMap.get(bizType);
-        TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources = sourceMap.get(bizType);
+        Object category = rule.getCategory();
+        TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink = sinkMap.get(category);
+        TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources = sourceMap.get(category);
 
         boolean success = flinkSubmitter.submitJob(rule, savepoint, sink, sources);
         if (success) {

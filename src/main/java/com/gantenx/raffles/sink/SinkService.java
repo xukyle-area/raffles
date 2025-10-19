@@ -1,19 +1,20 @@
 package com.gantenx.raffles.sink;
 
-import com.gantenx.raffles.biz.BizConfig;
-import com.gantenx.raffles.biz.consists.DataSourceType;
-import com.gantenx.raffles.model.RuleFlinkSql;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import com.gantenx.raffles.config.CategoryConfig;
+import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.model.RuleFlinkSql;
 
 public interface SinkService {
-    DataSourceType getDataSourceType();
+    DataType getDataType();
 
     void sink(StreamTableEnvironment ste, Table table, RuleFlinkSql rule);
 
-    default void checkType(BizConfig.SinkConfig sinkConfig) {
-        if (!this.getDataSourceType().getCode().equals(sinkConfig.getType())) {
-            throw new RuntimeException("sink type not match, expect: " + this.getDataSourceType().getCode() + ", actual: " + sinkConfig.getType());
+    default void checkType(CategoryConfig.DataTypeConfig sinkConfig) {
+        if (!this.getDataType().equals(sinkConfig.getDataType())) {
+            throw new RuntimeException("sink type not match, expect: " + this.getDataType().getCode() + ", actual: "
+                    + sinkConfig.getDataType().getCode());
         }
     }
 }

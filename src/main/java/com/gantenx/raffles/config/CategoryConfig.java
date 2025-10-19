@@ -1,16 +1,16 @@
-package com.gantenx.raffles.biz;
+package com.gantenx.raffles.config;
 
-import com.gantenx.raffles.biz.consists.BizType;
+import com.gantenx.raffles.config.consists.DataType;
 import lombok.Data;
 
 @Data
-public class BizConfig {
+public class CategoryConfig {
     /**
      * 业务类型 与 BizType
      *
      * @see BizType#getCode()
      */
-    private String category;
+    private Category category;
     /**
      * 业务是否上线
      */
@@ -22,11 +22,11 @@ public class BizConfig {
     /**
      * 业务 flink 的来源配置
      */
-    private SourceConfig sourceConfig;
+    private DataTypeConfig sourceConfig;
     /**
      * 业务 flink 的 sink 配置
      */
-    private SinkConfig sinkConfig;
+    private DataTypeConfig sinkConfig;
 
     /**
      * Source 与 Sink 的配置
@@ -34,15 +34,8 @@ public class BizConfig {
      * 为了兼容两种类型的数据类型的配置
      */
     @Data
-    public static class SourceConfig {
-        private String type;
-        private Mysql mysql;
-        private Kafka kafka;
-    }
-
-    @Data
-    public static class SinkConfig {
-        private String type;
+    public static class DataTypeConfig {
+        private DataType dataType;
         private Mysql mysql;
         private Kafka kafka;
     }

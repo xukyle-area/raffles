@@ -1,4 +1,4 @@
-package com.gantenx.raffles.biz.consists;
+package com.gantenx.raffles.config.consists;
 
 public enum Direction {
     SOURCE(1, "input"), SINK(2, "output");

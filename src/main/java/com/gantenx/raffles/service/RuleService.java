@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.gantenx.raffles.biz.BizConfigManager;
 import com.gantenx.raffles.config.Category;
+import com.gantenx.raffles.config.ConfigManager;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.model.dao.RuleDao;
 import com.gantenx.raffles.model.dao.SqlTemplateDao;
@@ -66,10 +66,11 @@ public class RuleService {
         flinkRule.setVersion(complianceRule.getVersion());
         flinkRule.setParams(complianceRule.getParams());
         flinkRule.setParamsDesc(complianceRule.getParamsDesc());
-        Category category = com.gantenx.raffles.config.Category.getCategory(complianceRule.getCategoryId());
+        Category category = Category.getCategory(complianceRule.getCategoryId());
+        flinkRule.setCategory(category);
         if (category != null) {
             flinkRule.setCategoryName(category.getName());
-            flinkRule.setBizType(BizConfigManager.getBizType(category.getName()));
+            flinkRule.setCategoryConfig(ConfigManager.getCategoryConfig(category));
         }
         int sqlTemplateId = complianceRule.getSqlTemplateId();
         SqlTemplate feature = sqlTemplateDao.selectById(sqlTemplateId);
