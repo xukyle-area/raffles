@@ -81,17 +81,11 @@ public class RuleSubmitter {
         }
     }
 
-    /**
-     * 按照业务提交规则
-     *
-     * @param bizType 业务类型的枚举
-     */
     public void submitRules(Category category) {
-        CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);;
-
+        CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
 
         boolean batch = categoryConfig.isBatch();
-        log.info("submitRules, bizType:{}, category:{}", category.getName(), category);
+        log.info("submitRules, category:{}, batch:{}", category, batch);
 
         Set<String> activeNames = flinkSubmitter.getActiveJobNames();
 

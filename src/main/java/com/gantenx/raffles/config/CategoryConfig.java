@@ -5,11 +5,7 @@ import lombok.Data;
 
 @Data
 public class CategoryConfig {
-    /**
-     * 业务类型 与 BizType
-     *
-     * @see BizType#getCode()
-     */
+
     private Category category;
     /**
      * 业务是否上线
