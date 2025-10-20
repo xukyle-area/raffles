@@ -81,11 +81,11 @@ public class RuleSubmitter {
         }
     }
 
-    public void submitRules(Category category) {
+    public void submit(Category category) {
         CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
 
         boolean batch = categoryConfig.isBatch();
-        log.info("submitRules, category:{}, batch:{}", category, batch);
+        log.info("submit, category:{}, batch:{}", category, batch);
 
         Set<String> activeNames = flinkSubmitter.getActiveJobNames();
 
@@ -94,7 +94,7 @@ public class RuleSubmitter {
         rules.stream().filter(rule -> category.equals(rule.getCategory()))
                 .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
                 .peek(rule -> log.info("after filter, final submit rule:{}", GsonUtils.toJson(rule)))
-                .forEach(this::submitSingleRule);
+                .forEach(this::submit);
     }
 
     /**
@@ -103,7 +103,7 @@ public class RuleSubmitter {
      * 2. 提交任务
      * 3. 更新缓存
      */
-    public void submitSingleRule(RuleFlinkSql rule) {
+    private void submit(RuleFlinkSql rule) {
         log.info("submitSingleRule, rule:{}", rule);
         String ruleCode = rule.getName();
         String savepoint = this.cancelJobs(ruleCode);
@@ -111,7 +111,7 @@ public class RuleSubmitter {
         TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink = sinkMap.get(category);
         TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources = sourceMap.get(category);
 
-        boolean success = flinkSubmitter.submitJob(rule, savepoint, sink, sources);
+        boolean success = flinkSubmitter.submit(rule, savepoint, sink, sources);
         if (success) {
             log.info("rule submit success, ruleCode:{}", ruleCode);
             this.updateRuleStatus(rule);

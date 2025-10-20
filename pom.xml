@@ -202,6 +202,49 @@
 
     <build>
         <plugins>
+            <!-- 创建普通的JAR包（不包含依赖），用于Flink提交 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.gantenx.raffles.RafflesApplication</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- 复制thin jar到resources/lib目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-thin-jar</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <!-- 复制原始的thin jar -->
+                                <copy
+                                    file="${project.build.directory}/${project.artifactId}-${project.version}.jar.original"
+                                    tofile="${project.build.outputDirectory}/lib/${project.artifactId}-${project.version}.jar"
+                                    failonerror="true" />
+                                <!-- 如果没有.original文件，则复制普通的jar -->
+                                <copy
+                                    file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                                    tofile="${project.build.outputDirectory}/lib/${project.artifactId}-${project.version}.jar"
+                                    failonerror="false"
+                                    overwrite="false" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

@@ -1,13 +1,12 @@
-# 数据库配置
 server:
   port: 18080
 
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/raffles?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: rootpassword
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/raffles?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:rootpassword}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -26,12 +25,11 @@ mybatis:
     aggressive-lazy-loading: false
 
 flink:
-  host: localhost
-  rest-port: 9081  # Docker端口转发到容器内的8081端口
-  rpc-port: 6123   # Docker端口转发到容器内的6123端口
-  savepoint-path: /tmp/flink-savepoints
+  host: ${FLINK_HOST:localhost}
+  rest-port: ${FLINK_REST_PORT:9081}
+  rpc-port: ${FLINK_RPC_PORT:6123}
+  savepoint-path: ${FLINK_SAVEPOINT_PATH:/tmp/flink-savepoints}
 
-# 业务分类配置
 raffles:
   category:
     configs:
@@ -41,10 +39,10 @@ raffles:
         source:
           type: kafka
           kafka:
-            servers: localhost:9092
+            servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
             topic: calculate-input
         sink:
           type: kafka
           kafka:
-            servers: localhost:9092
+            servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
             topic: calculate-output

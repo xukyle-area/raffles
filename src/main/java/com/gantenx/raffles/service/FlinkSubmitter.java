@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.utils.FileListing;
+import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -41,7 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class FlinkSubmitter {
     // 所需要的 jars 文件, 通过 Maven resource 将 resources/lib 下的文件打包到 classpath 中
-    private final static List<String> JAR_FILES = FileListing.getPaths("lib");
+    private final static List<String> JAR_FILES = FileListing.getFlinkJars();
 
     @Autowired
     private FlinkConfig flinkConfig;
@@ -53,7 +54,7 @@ public class FlinkSubmitter {
     @PostConstruct
     public void init() throws Exception {
         this.initClient();
-        // ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
+        ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
     }
 
     /**
@@ -77,6 +78,7 @@ public class FlinkSubmitter {
     public void initClient() throws Exception {
         RemoteStreamEnvironment remoteStreamEnvironment = this.buildRemoteStreamEnvironment(new Configuration());
         Configuration configuration = remoteStreamEnvironment.getClientConfiguration();
+        log.info("Flink client configuration: {}", configuration);
         commonClusterClient = new RestClusterClient<>(configuration, UUID.randomUUID());
     }
 
@@ -104,7 +106,7 @@ public class FlinkSubmitter {
      * @param sink          自定义注册sink
      * @param sources       自定义注册数据源
      */
-    public boolean submitJob(RuleFlinkSql sql, @Nullable String savepointPath,
+    public boolean submit(RuleFlinkSql sql, @Nullable String savepointPath,
             TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
             TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
@@ -201,7 +203,7 @@ public class FlinkSubmitter {
                 StringUtils.isNotBlank(savepointPath) ? SavepointRestoreSettings.forPath(savepointPath, Boolean.FALSE)
                         : null;
         RemoteStreamEnvironment remoteStreamEnvironment = new RemoteStreamEnvironment(flinkConfig.getHost(),
-                flinkConfig.getRpcPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
+                flinkConfig.getRestPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
         remoteStreamEnvironment.enableCheckpointing(1000L * 60L * 10L, CheckpointingMode.EXACTLY_ONCE);
         remoteStreamEnvironment
                 .setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(15), Time.minutes(2)));

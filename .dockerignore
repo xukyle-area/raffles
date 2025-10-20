@@ -1,0 +1,10 @@
+# .dockerignore
+.git
+.gitignore
+*.md
+.mvn
+mvn*
+Dockerfile
+build-docker.sh
+*.log
+.DS_Store
