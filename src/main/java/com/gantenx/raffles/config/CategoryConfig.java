@@ -1,10 +1,13 @@
 package com.gantenx.raffles.config;
 
+import java.io.Serializable;
 import com.gantenx.raffles.config.consists.DataType;
 import lombok.Data;
 
 @Data
-public class CategoryConfig {
+public class CategoryConfig implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Category category;
     /**
@@ -30,14 +33,19 @@ public class CategoryConfig {
      * 为了兼容两种类型的数据类型的配置
      */
     @Data
-    public static class DataTypeConfig {
+    public static class DataTypeConfig implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private DataType dataType;
         private Mysql mysql;
         private Kafka kafka;
     }
 
     @Data
-    public static class Mysql {
+    public static class Mysql implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
         private String driver;
         private String jdbcUrl;
         private String username;
@@ -46,7 +54,9 @@ public class CategoryConfig {
     }
 
     @Data
-    public static class Kafka {
+    public static class Kafka implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String servers;
         private String topic;
     }

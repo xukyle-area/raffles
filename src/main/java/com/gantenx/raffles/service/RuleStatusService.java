@@ -1,12 +1,9 @@
 package com.gantenx.raffles.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.BoundValueOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
-import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -14,15 +11,15 @@ public class RuleStatusService {
     private static final String RULE_TO_EXPRESSION = "rule_expression:";
     private static final String RULE_TO_VERSION = "rule_version:";
 
-    @Resource
-    private RedisTemplate<String, String> redisTemplate;
+    // 使用内存存储替代Redis
+    private final Map<String, String> expressionCache = new ConcurrentHashMap<>();
+    private final Map<String, Integer> versionCache = new ConcurrentHashMap<>();
 
     public void setLatestExpression(String ruleCode, String sql) {
         String key = RULE_TO_EXPRESSION + ruleCode;
         try {
-
-            BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(key);
-            valueOps.set(sql);
+            expressionCache.put(key, sql);
+            log.debug("setLatestExpression, key: {}, sql: {}", key, sql);
         } catch (Exception e) {
             log.error("setLatestExpression, key: {}", key, e);
         }
@@ -31,12 +28,9 @@ public class RuleStatusService {
     public String getLatestExpression(String ruleCode) {
         String key = RULE_TO_EXPRESSION + ruleCode;
         try {
-
-            BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(key);
-            Object expression = valueOps.get();
-            if (expression != null) {
-                return expression.toString();
-            }
+            String expression = expressionCache.get(key);
+            log.debug("getLatestExpression, key: {}, expression: {}", key, expression);
+            return expression;
         } catch (Exception e) {
             log.error("getLatestExpression, key: {}", key, e);
         }
@@ -47,12 +41,9 @@ public class RuleStatusService {
     public Integer getLatestVersion(String ruleCode) {
         String key = RULE_TO_VERSION + ruleCode;
         try {
-
-            BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(key);
-            Object version = valueOps.get();
-            if (Objects.nonNull(version)) {
-                return Integer.valueOf(version.toString());
-            }
+            Integer version = versionCache.get(key);
+            log.debug("getLatestVersion, key: {}, version: {}", key, version);
+            return version;
         } catch (Exception e) {
             log.error("getLatestVersion, key: {}", key, e);
         }
@@ -63,8 +54,8 @@ public class RuleStatusService {
     public void setLatestVersion(String ruleCode, Integer version) {
         String key = RULE_TO_VERSION + ruleCode;
         try {
-            BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(key);
-            valueOps.set(String.valueOf(version));
+            versionCache.put(key, version);
+            log.debug("setLatestVersion, key: {}, version: {}", key, version);
         } catch (Exception e) {
             log.error("setLatestVersion, key: {}", key, e);
         }
