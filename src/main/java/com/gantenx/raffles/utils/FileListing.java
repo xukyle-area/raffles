@@ -35,6 +35,7 @@ public class FileListing {
             // 回退到原来的方式
             jars = FileListing.getPaths("lib");
         }
+        log.info("Flink JAR files: {}", jars);
 
         return jars;
     }

@@ -27,7 +27,18 @@ public class KafkaSource implements SourceService {
         CategoryConfig categoryConfig = rule.getCategoryConfig();
         CategoryConfig.DataTypeConfig sourceConfig = categoryConfig.getSourceConfig();
         this.checkType(sourceConfig);
+
+        // 添加调试日志
+        log.info("=== Kafka Source Configuration ===");
+        log.info("Kafka servers from config: {}", sourceConfig.getKafka().getServers());
+        log.info("Kafka topic from config: {}", sourceConfig.getKafka().getTopic());
+
         KafkaTableSource kafkaTableSource = this.buildKafkaSource(sourceConfig.getKafka());
+
+        // 验证配置是否正确传递
+        log.info("KafkaTableSource servers: {}", kafkaTableSource.getServers());
+        log.info("KafkaTableSource topic: {}", kafkaTableSource.getTopic());
+
         FlinkKafkaRegister.registerKafkaTable(env, ste, kafkaTableSource, "open-account-group");
         ste.createTemporarySystemFunction("find_in_set", new FindInSet());
     }

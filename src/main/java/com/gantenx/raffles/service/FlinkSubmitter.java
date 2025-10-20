@@ -1,5 +1,6 @@
 package com.gantenx.raffles.service;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -11,8 +12,6 @@ import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobID;
-import org.apache.flink.api.common.restartstrategy.RestartStrategies;
-import org.apache.flink.api.common.time.Time;
 import org.apache.flink.client.program.rest.RestClusterClient;
 import org.apache.flink.configuration.*;
 import org.apache.flink.core.execution.SavepointFormatType;
@@ -20,9 +19,7 @@ import org.apache.flink.core.fs.Path;
 import org.apache.flink.runtime.client.JobStatusMessage;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
-import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 import org.apache.flink.runtime.messages.Acknowledge;
-import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.RemoteStreamEnvironment;
 import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -186,6 +183,8 @@ public class FlinkSubmitter {
         configuration.setString(PipelineOptionsInternal.PIPELINE_FIXED_JOB_ID, jobId);
         configuration.setString(PipelineOptions.NAME, ruleName);
         configuration.set(PipelineOptions.JARS, JAR_FILES);
+        log.info("Pipeline configuration - JARS: {}", configuration.get(PipelineOptions.JARS));
+
         return configuration;
     }
 
@@ -195,20 +194,37 @@ public class FlinkSubmitter {
      * @param configuration flink 配置
      */
     private RemoteStreamEnvironment buildRemoteStreamEnvironment(Configuration configuration) {
-        List<String> jars = configuration.getOptional(PipelineOptions.JARS).orElse(new ArrayList<>());
-        String savepointPath =
-                configuration.getOptional(SavepointConfigOptions.SAVEPOINT_PATH).orElse(StringUtils.EMPTY);
+        List<String> jars = FileListing.getFlinkJars();
 
-        SavepointRestoreSettings settings =
-                StringUtils.isNotBlank(savepointPath) ? SavepointRestoreSettings.forPath(savepointPath, Boolean.FALSE)
-                        : null;
-        RemoteStreamEnvironment remoteStreamEnvironment = new RemoteStreamEnvironment(flinkConfig.getHost(),
-                flinkConfig.getRestPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
-        remoteStreamEnvironment.enableCheckpointing(1000L * 60L * 10L, CheckpointingMode.EXACTLY_ONCE);
-        remoteStreamEnvironment
-                .setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(15), Time.minutes(2)));
-        remoteStreamEnvironment.setParallelism(1);
-        return remoteStreamEnvironment;
+        // 添加详细日志
+        log.info("=== Flink JAR Configuration ===");
+        log.info("Total JAR files: {}", jars.size());
+        for (String jar : jars) {
+            log.info("JAR file: {}", jar);
+            // 验证文件存在
+            File jarFile = new File(jar);
+            log.info("  - Exists: {}, Size: {} bytes", jarFile.exists(), jarFile.length());
+        }
+
+        // 转换为URL数组（这很重要！）
+        List<URL> jarUrls = new ArrayList<>();
+        for (String jar : jars) {
+            try {
+                jarUrls.add(new File(jar).toURI().toURL());
+            } catch (Exception e) {
+                log.error("Failed to convert JAR to URL: {}", jar, e);
+            }
+        }
+
+        URL[] urlArray = jarUrls.toArray(new URL[0]);
+        String[] jarArray = jars.toArray(new String[0]);
+
+        log.info("JAR URLs: {}", Arrays.toString(urlArray));
+        log.info("JAR Paths: {}", Arrays.toString(jarArray));
+
+        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRpcPort(), configuration, jarArray, // JAR文件路径
+                urlArray, // JAR文件URL - 这个很重要！
+                null);
     }
 
     /**
