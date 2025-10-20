@@ -24,6 +24,7 @@ import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
 import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.RemoteStreamEnvironment;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
@@ -40,8 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class FlinkSubmitter {
-    // 所需要的 jars 文件, 通过 dist.sh 将 resources/lib 下的文件打包到镜像中
-    private final static List<String> JAR_FILES = FileListing.getPaths("/app/flink-lib");
+    // 所需要的 jars 文件, 通过 Maven resource 将 resources/lib 下的文件打包到 classpath 中
+    private final static List<String> JAR_FILES = FileListing.getPaths("lib");
 
     @Autowired
     private FlinkConfig flinkConfig;
@@ -124,8 +125,32 @@ public class FlinkSubmitter {
             EnvironmentSettings settings = EnvironmentSettings.newInstance().build();
             log.info("Step 3.2: EnvironmentSettings created, now creating StreamTableEnvironment...");
             log.info("Step 3.3: About to call StreamTableEnvironment.create()...");
-            ste = StreamTableEnvironment.create(rse, settings);
-            log.info("Step 3.4: StreamTableEnvironment.create() completed successfully");
+
+            // 使用CompletableFuture添加超时控制
+            CompletableFuture<StreamTableEnvironment> future = CompletableFuture.supplyAsync(() -> {
+                log.info("Step 3.3.1: Inside async StreamTableEnvironment.create()...");
+                return StreamTableEnvironment.create(rse, settings);
+            });
+
+            try {
+                ste = future.get(30, TimeUnit.SECONDS); // 30秒超时
+                log.info("Step 3.4: StreamTableEnvironment.create() completed successfully");
+            } catch (TimeoutException e) {
+                log.error("Step 3.4: StreamTableEnvironment.create() timed out after 30 seconds");
+                log.info("Step 3.5: Attempting fallback to local StreamTableEnvironment...");
+                future.cancel(true);
+
+                // 尝试创建本地StreamTableEnvironment作为fallback
+                try {
+                    StreamExecutionEnvironment localEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+                    ste = StreamTableEnvironment.create(localEnv, settings);
+                    log.info("Step 3.6: Local StreamTableEnvironment created successfully as fallback");
+                } catch (Exception fallbackException) {
+                    log.error("Step 3.6: Fallback to local StreamTableEnvironment also failed", fallbackException);
+                    return false;
+                }
+            }
+
             log.info("Step 3: StreamTableEnvironment created successfully");
         } catch (Exception e) {
             log.error("Step 3: Failed to create StreamTableEnvironment", e);
@@ -236,9 +261,9 @@ public class FlinkSubmitter {
             configuration.set(SavepointConfigOptions.SAVEPOINT_PATH, savepointPath);
         }
         configuration.setString(JobManagerOptions.ADDRESS, flinkConfig.getHost());
-        configuration.setInteger(JobManagerOptions.PORT, flinkConfig.getPort());
+        configuration.setInteger(JobManagerOptions.PORT, flinkConfig.getRpcPort());
         configuration.setString(RestOptions.ADDRESS, flinkConfig.getHost());
-        configuration.setInteger(RestOptions.PORT, flinkConfig.getPort());
+        configuration.setInteger(RestOptions.PORT, flinkConfig.getRestPort());
 
         String jobId = JobID.generate().toString();
         configuration.setString(PipelineOptionsInternal.PIPELINE_FIXED_JOB_ID, jobId);
@@ -261,7 +286,7 @@ public class FlinkSubmitter {
                 StringUtils.isNotBlank(savepointPath) ? SavepointRestoreSettings.forPath(savepointPath, Boolean.FALSE)
                         : null;
         RemoteStreamEnvironment remoteStreamEnvironment = new RemoteStreamEnvironment(flinkConfig.getHost(),
-                flinkConfig.getPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
+                flinkConfig.getRpcPort(), configuration, jars.toArray(new String[0]), new URL[] {}, settings);
         remoteStreamEnvironment.enableCheckpointing(1000L * 60L * 10L, CheckpointingMode.EXACTLY_ONCE);
         remoteStreamEnvironment
                 .setRestartStrategy(RestartStrategies.failureRateRestart(5, Time.minutes(15), Time.minutes(2)));

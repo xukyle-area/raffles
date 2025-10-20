@@ -14,5 +14,6 @@ import lombok.Data;
 public class FlinkConfig {
     private String savepointPath;
     private String host;
-    private int port;
+    private int restPort;
+    private int rpcPort;
 }

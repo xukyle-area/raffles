@@ -27,7 +27,8 @@ mybatis:
 
 flink:
   host: localhost
-  port: 8083
+  rest-port: 9081  # Docker端口转发到容器内的8081端口
+  rpc-port: 6123   # Docker端口转发到容器内的6123端口
   savepoint-path: /tmp/flink-savepoints
 
 # 业务分类配置
