@@ -22,6 +22,6 @@ public class FlinkSchedule {
             } catch (Exception e) {
                 log.error("Error submitting Flink jobs: ", e);
             }
-        }, 120, 0, "FlinkSchedule");
+        }, 120, 30, "FlinkSchedule");
     }
 }
