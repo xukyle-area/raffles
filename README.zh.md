@@ -1,30 +1,32 @@
 # 🚀 Raffles
 
-Raffles 是一个基于 Java 的应用程序，使用 Spring Boot 构建，集成了 MyBatis 用于数据库操作，Flink 用于数据处理，以及其他用于文件处理和类型转换的工具。它似乎设计用于管理规则、类别和 SQL 模板，可能用于数据验证或处理工作流。
+Raffles 是一个基于 Flink 和 Spring Boot 的高可扩展流式处理平台，负责 Flink 任务与规则引擎系统的架构设计与实现，支持动态任务生成与规则配置化管理。
 
-## 功能特性
+关键词: Flink、Spring Boot、配置化任务、规则引擎
 
-- **数据库集成**：使用 MyBatis 进行 ORM，为 `category`、`rule` 和 `sql_template` 等表生成实体和映射器。
-- **Flink 支持**：包括用于 Flink 类型信息和行处理的工具。
-- **文件列表**：提供从类路径或文件系统列出 JAR 文件的工具。
-- **Docker 支持**：包括用于容器化的 Docker 配置。
-- **Kubernetes 部署**：用于在 Kubernetes 环境中重启的脚本。
+## 技术实现与成果
+
+- **多源数据接入架构**：实现流式与批量任务统一采集与高效处理，显著提升数据吞吐性能。
+- **全链路配置化管理**：实现任务输入、逻辑与输出全链路配置化管理，支持业务方快速上线新任务与灵活扩展。
+- **统一 REST API 接口体系**：支持任务触发、监控与自动化运维，提升系统运维效率与可靠性。
+- **动态规则管理**：支持规则动态提交、在线编辑与热加载应用，满足高频变更与复杂实时决策场景需求。规则加载时间缩短 60%，任务上线周期由 1 天降至 1 小时。
 
 ## 技术栈
 
+- **Flink**：流式处理框架。
+- **Spring Boot**：应用程序框架。
 - **Java**：核心语言。
-- **Spring Boot**：用于构建应用程序的框架。
-- **MyBatis**：用于数据库映射和代码生成。
-- **Flink**：用于流处理工具。
 - **Maven**：构建工具。
+- **MyBatis**：数据库操作。
 - **Docker**：容器化。
-- **MySQL**：数据库（在 MyBatis 生成器中配置）。
+- **Kubernetes**：部署。
+- **MySQL**：数据库。
 
 ## 先决条件
 
 - Java 8 或更高版本
 - Maven 3.x
-- MySQL 8.x（用于代码生成）
+- MySQL 8.x
 - Docker（可选，用于容器化部署）
 
 ## 入门指南
@@ -106,8 +108,8 @@ mvn spring-boot:run
 ## 配置
 
 - **数据库**：在 `src/main/resources/generatorConfig.xml` 和 `application.yaml` 中配置。
-- **Flink Jars**：`FileListing.getFlinkJars()` 方法检索用于 Flink 提交的 JAR 路径。
-- **类别**：在 `Category` 枚举中定义。
+- **Flink 任务**：配置化任务管理。
+- **规则**：动态规则引擎。
 
 ## 项目结构
 

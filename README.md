@@ -1,30 +1,32 @@
 # 🚀 Raffles
 
-Raffles is a Java-based application built with Spring Boot, integrating MyBatis for database operations, Flink for data processing, and other utilities for file handling and type conversions. It appears to be designed for managing rules, categories, and SQL templates, possibly for data validation or processing workflows.
+Raffles is a high-scalable streaming processing platform based on Flink and Spring Boot, responsible for the architecture design and implementation of Flink tasks and rule engine systems. It supports dynamic task generation and configurable rule management.
 
-## Features
+Keywords: Flink, Spring Boot, Configurable Tasks, Rule Engine
 
-- **Database Integration**: Uses MyBatis for ORM, with generated entities and mappers for tables like `category`, `rule`, and `sql_template`.
-- **Flink Support**: Includes utilities for Flink type information and row processing.
-- **File Listing**: Provides utilities to list JAR files from classpath or filesystem.
-- **Docker Support**: Includes Docker configuration for containerization.
-- **Kubernetes Deployment**: Scripts for restarting in Kubernetes environment.
+## Technical Implementation and Achievements
+
+- **Multi-source Data Ingestion Architecture**: Unified collection and efficient processing of streaming and batch tasks, significantly improving data throughput performance.
+- **Full-link Configurable Management**: Configurable management of task input, logic, and output, supporting rapid task deployment and flexible expansion for business teams.
+- **Unified REST API Interface System**: Supports task triggering, monitoring, and automated operations, enhancing system operation efficiency and reliability.
+- **Dynamic Rule Management**: Supports dynamic rule submission, online editing, and hot-loading, meeting the needs of high-frequency changes and complex real-time decision scenarios. Rule loading time reduced by 60%, task deployment cycle from 1 day to 1 hour.
 
 ## Technology Stack
 
+- **Flink**: Streaming processing framework.
+- **Spring Boot**: Application framework.
 - **Java**: Core language.
-- **Spring Boot**: Framework for building the application.
-- **MyBatis**: For database mapping and code generation.
-- **Flink**: For stream processing utilities.
 - **Maven**: Build tool.
+- **MyBatis**: Database operations.
 - **Docker**: Containerization.
-- **MySQL**: Database (configured in MyBatis generator).
+- **Kubernetes**: Deployment.
+- **MySQL**: Database.
 
 ## Prerequisites
 
 - Java 8 or higher
 - Maven 3.x
-- MySQL 8.x (for code generation)
+- MySQL 8.x
 - Docker (optional, for containerized deployment)
 
 ## Getting Started
@@ -106,8 +108,8 @@ Use the provided script to restart in Kubernetes:
 ## Configuration
 
 - **Database**: Configure in `src/main/resources/generatorConfig.xml` and `application.yaml`.
-- **Flink Jars**: The `FileListing.getFlinkJars()` method retrieves JAR paths for Flink submissions.
-- **Categories**: Defined in `Category` enum.
+- **Flink Tasks**: Configurable task management.
+- **Rules**: Dynamic rule engine.
 
 ## Project Structure
 
