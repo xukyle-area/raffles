@@ -236,7 +236,7 @@ public class FlinkSubmitter {
         log.info("JAR URLs: {}", Arrays.toString(urlArray));
         log.info("JAR Paths: {}", Arrays.toString(jarArray));
 
-        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRpcPort(), configuration, jarArray, // JAR文件路径
+        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(), configuration, jarArray, // JAR文件路径
                 urlArray, // JAR文件URL - 这个很重要！
                 null);
     }
