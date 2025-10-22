@@ -4,12 +4,12 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.consists.DataType;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 
 public interface SinkService {
     DataType getDataType();
 
-    void sink(StreamTableEnvironment ste, Table table, RuleFlinkSql rule);
+    void sink(StreamTableEnvironment ste, Table table, FlinkRule rule);
 
     default void checkType(CategoryConfig.DataTypeConfig sinkConfig) {
         if (!this.getDataType().equals(sinkConfig.getDataType())) {

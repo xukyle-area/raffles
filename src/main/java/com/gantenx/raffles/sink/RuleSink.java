@@ -8,7 +8,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.utils.FlinkTypeUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,10 +19,10 @@ public class RuleSink implements Serializable, SinkFunction<Tuple2<Boolean, Row>
     private static final String TRANSACTION_SINK_ROW_KEY = "retractKey";
     private static final String IS_TO_UPDATE = "isToUpdate";
     private final KafkaSender kafkaSender;
-    private final RuleFlinkSql ruleFlinkSql;
+    private final FlinkRule ruleFlinkSql;
     private final SinkBuilder sinkBuilder;
 
-    public RuleSink(RuleFlinkSql rule, SinkBuilder sinkBuilder, String servers, String topic) {
+    public RuleSink(FlinkRule rule, SinkBuilder sinkBuilder, String servers, String topic) {
         this.ruleFlinkSql = rule;
         this.sinkBuilder = sinkBuilder;
         this.kafkaSender = new KafkaSender(servers, topic);

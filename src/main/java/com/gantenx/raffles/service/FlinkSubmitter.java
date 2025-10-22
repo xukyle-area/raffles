@@ -29,7 +29,7 @@ import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.utils.FileListing;
 import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
@@ -102,9 +102,9 @@ public class FlinkSubmitter {
      * @param sink          自定义注册sink
      * @param sources       自定义注册数据源
      */
-    public boolean submit(RuleFlinkSql sql, @Nullable String savepointPath,
-            TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
-            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
+    public boolean submit(FlinkRule sql, @Nullable String savepointPath,
+            TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink,
+            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> sources) {
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
         RemoteStreamEnvironment rse = this.buildRSE(config);
         StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());

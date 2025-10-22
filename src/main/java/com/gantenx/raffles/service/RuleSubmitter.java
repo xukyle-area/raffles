@@ -20,7 +20,7 @@ import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
 import com.gantenx.raffles.config.ConfigManager;
 import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.config.consists.Direction;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.sink.SinkService;
 import com.gantenx.raffles.source.SourceService;
 import com.gantenx.raffles.utils.GsonUtils;
@@ -37,9 +37,9 @@ public class RuleSubmitter {
     @Resource
     private RuleService ruleService;
 
-    private final Map<Category, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql>> sourceMap =
+    private final Map<Category, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule>> sourceMap =
             new HashMap<>();
-    private final Map<Category, TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql>> sinkMap = new HashMap<>();
+    private final Map<Category, TriConsumer<StreamTableEnvironment, Table, FlinkRule>> sinkMap = new HashMap<>();
 
     @Autowired
     public void sourceAndSinkServices(Set<SourceService> sourcesSet, Set<SinkService> sinksSet) {
@@ -75,8 +75,8 @@ public class RuleSubmitter {
      * 检查flink任务是否存在，不存在则取消
      */
     public void checkAndCancelJobs() {
-        List<RuleFlinkSql> allRules = ruleService.getRules();
-        Set<String> flinkCode = allRules.stream().map(RuleFlinkSql::getName).collect(Collectors.toSet());
+        List<FlinkRule> allRules = ruleService.getRules();
+        Set<String> flinkCode = allRules.stream().map(FlinkRule::getName).collect(Collectors.toSet());
         List<JobStatusMessage> activeJobs = flinkSubmitter.getActiveJobs();
         for (JobStatusMessage activeJob : activeJobs) {
             String jobName = activeJob.getJobName();
@@ -96,7 +96,7 @@ public class RuleSubmitter {
 
         Set<String> activeNames = flinkSubmitter.getActiveJobNames();
 
-        List<RuleFlinkSql> rules = ruleService.getRules();
+        List<FlinkRule> rules = ruleService.getRules();
 
         rules.stream().filter(rule -> category.equals(rule.getCategory()))
                 .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
@@ -110,31 +110,30 @@ public class RuleSubmitter {
      * 2. 提交任务
      * 3. 更新缓存
      */
-    private void submit(RuleFlinkSql rule) {
-        log.info("submitSingleRule, rule:{}", rule);
-        String ruleCode = rule.getName();
-        String savepoint = this.cancelJobs(ruleCode);
+    private void submit(FlinkRule rule) {
+        log.info("submit rule: {}", rule);
+        String ruleName = rule.getName();
+        String savepoint = this.cancelJobs(ruleName);
         Object category = rule.getCategory();
-        TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink = sinkMap.get(category);
-        TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources = sourceMap.get(category);
+        TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink = sinkMap.get(category);
+        TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> sources = sourceMap.get(category);
 
         boolean success = flinkSubmitter.submit(rule, savepoint, sink, sources);
         if (success) {
-            log.info("rule submit success, ruleCode:{}", ruleCode);
             this.updateRuleStatus(rule);
         }
     }
 
     /**
-     * 按照 code 取消任务，并返回 savepoint
+     * 按照 ruleName 取消任务，并返回 savepoint
      * 1. 状态正常的任务：取消并返回这个任务的 savepoint
      * 2. 状态异常的任务：直接取消
      */
-    private String cancelJobs(String code) {
-        // 筛选出所有与当前 code 匹配的任务
+    private String cancelJobs(String ruleName) {
+        // 筛选出所有与当前 ruleName 匹配的任务
         List<JobStatusMessage> jobs = flinkSubmitter.getActiveJobs().stream()
-                .filter(job -> job.getJobName().equals(code)).collect(Collectors.toList());
-
+                .filter(job -> job.getJobName().equals(ruleName)).collect(Collectors.toList());
+        log.info("found {} active jobs for ruleName: {}", jobs.size(), ruleName);
         String savepoint = null;
         for (JobStatusMessage job : jobs) {
             log.info("cancel job, job name:{}, jobId: {}, jobState: {}", job.getJobName(), job.getJobId(),
@@ -157,7 +156,7 @@ public class RuleSubmitter {
      * 2. expression，也就是可执行的 sql 语句
      * 上面字段变动之后，任务会被取消，再重新提交
      */
-    private void updateRuleStatus(RuleFlinkSql rule) {
+    private void updateRuleStatus(FlinkRule rule) {
         String key = rule.getName();
         ruleStatusService.setLatestExpression(key, rule.getExecutableSql() + rule.getParams());
         ruleStatusService.setLatestVersion(key, rule.getVersion());

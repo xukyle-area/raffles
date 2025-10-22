@@ -18,10 +18,7 @@ public class FlinkSchedule {
     public void init() {
         ScheduledThreadPool.scheduleWithFixedDelay(() -> {
             try {
-                log.info("Start submitting Flink jobs...");
                 ruleSubmitter.submit(Category.CALCULATE);
-
-                log.info("Flink jobs submitted successfully.");
             } catch (Exception e) {
                 log.error("Error submitting Flink jobs: ", e);
             }

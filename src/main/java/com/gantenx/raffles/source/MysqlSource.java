@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.consists.DataType;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.model.dao.TableDDLDao;
 import com.gantenx.raffles.model.entity.FlinkTableDDL;
 import com.gantenx.raffles.utils.ClassToMapConverter;
@@ -32,7 +32,7 @@ public class MysqlSource implements SourceService {
     }
 
     @Override
-    public void source(StreamExecutionEnvironment env, StreamTableEnvironment ste, RuleFlinkSql rule) {
+    public void source(StreamExecutionEnvironment env, StreamTableEnvironment ste, FlinkRule rule) {
         CategoryConfig categoryConfig = rule.getCategoryConfig();
         CategoryConfig.DataTypeConfig sourceConfig = categoryConfig.getSourceConfig();
         this.checkType(sourceConfig);

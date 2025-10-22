@@ -11,7 +11,7 @@ import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
 import com.gantenx.raffles.config.calculate.CalculateSinkBuilder;
 import com.gantenx.raffles.config.consists.DataType;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -30,7 +30,7 @@ public class KafkaSink implements SinkService {
     }
 
     @Override
-    public void sink(StreamTableEnvironment ste, Table table, RuleFlinkSql rule) {
+    public void sink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
         DataTypeConfig sinkConfig = rule.getCategoryConfig().getSinkConfig();
         this.checkType(sinkConfig);
         CategoryConfig.Kafka kafkaConfig = sinkConfig.getKafka();

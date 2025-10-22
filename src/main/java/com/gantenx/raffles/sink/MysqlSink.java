@@ -6,7 +6,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.consists.DataType;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -19,7 +19,7 @@ public class MysqlSink implements SinkService {
     }
 
     @Override
-    public void sink(StreamTableEnvironment ste, Table table, RuleFlinkSql rule) {
+    public void sink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
         CategoryConfig categoryConfig = rule.getCategoryConfig();
         CategoryConfig.DataTypeConfig sinkConfig = categoryConfig.getSinkConfig();
         this.checkType(sinkConfig);

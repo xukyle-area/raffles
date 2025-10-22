@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.ConfigManager;
-import com.gantenx.raffles.model.RuleFlinkSql;
+import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.model.dao.RuleDao;
 import com.gantenx.raffles.model.dao.SqlTemplateDao;
 import com.gantenx.raffles.model.entity.Rule;
@@ -29,7 +29,7 @@ public class RuleService {
     @Autowired
     private RuleStatusService ruleStatusService;
 
-    public boolean isDuplicateRule(RuleFlinkSql rule) {
+    public boolean isDuplicateRule(FlinkRule rule) {
         String expression = rule.getExecutableSql() + rule.getParams();
         String latestExpression = ruleStatusService.getLatestExpression(rule.getName());
         Integer version = rule.getVersion();
@@ -49,7 +49,7 @@ public class RuleService {
      *
      * @return 所有规则
      */
-    public List<RuleFlinkSql> getRules() {
+    public List<FlinkRule> getRules() {
         return ruleDao.selectActiveRules().stream().filter(Objects::nonNull).map(this::toFlinkSqlRule)
                 .filter(rule -> StringUtils.isNotEmpty(rule.getExecutableSql())).collect(Collectors.toList());
     }
@@ -60,8 +60,8 @@ public class RuleService {
      * rule.params 为 sql 模板参数
      * 通过 rule.params 与 feature.expression 生成可执行 sql
      */
-    private RuleFlinkSql toFlinkSqlRule(Rule complianceRule) {
-        RuleFlinkSql flinkRule = new RuleFlinkSql();
+    private FlinkRule toFlinkSqlRule(Rule complianceRule) {
+        FlinkRule flinkRule = new FlinkRule();
         flinkRule.setId(complianceRule.getId());
         flinkRule.setCategoryId(complianceRule.getCategoryId());
         flinkRule.setName(complianceRule.getCode());
