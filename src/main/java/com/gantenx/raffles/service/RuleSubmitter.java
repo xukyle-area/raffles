@@ -23,7 +23,6 @@ import com.gantenx.raffles.config.consists.Direction;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.sink.SinkService;
 import com.gantenx.raffles.source.SourceService;
-import com.gantenx.raffles.utils.GsonUtils;
 import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
@@ -100,8 +99,7 @@ public class RuleSubmitter {
 
         rules.stream().filter(rule -> category.equals(rule.getCategory()))
                 .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
-                .peek(rule -> log.info("after filter, final submit rule:{}", GsonUtils.toJson(rule)))
-                .forEach(this::submit);
+                .peek(rule -> log.info("after filter, submit rule:{}", rule.getName())).forEach(this::submit);
     }
 
     /**
@@ -132,6 +130,7 @@ public class RuleSubmitter {
     private String cancelJobs(String ruleName) {
         // 筛选出所有与当前 ruleName 匹配的任务
         List<JobStatusMessage> jobs = flinkSubmitter.getActiveJobs().stream()
+                .peek(job -> log.info("found active job for ruleName: {}, jobName: {}", ruleName, job.getJobName()))
                 .filter(job -> job.getJobName().equals(ruleName)).collect(Collectors.toList());
         log.info("found {} active jobs for ruleName: {}", jobs.size(), ruleName);
         String savepoint = null;
