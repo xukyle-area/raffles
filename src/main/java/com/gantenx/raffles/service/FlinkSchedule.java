@@ -8,13 +8,13 @@ import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-// @Service
+@Service
 public class FlinkSchedule {
 
     @Autowired
     private RuleSubmitter ruleSubmitter;
 
-    // @PostConstruct
+    @PostConstruct
     public void init() {
         ScheduledThreadPool.scheduleWithFixedDelay(() -> {
             try {
