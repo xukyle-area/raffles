@@ -72,9 +72,10 @@ public class FlinkSubmitter {
         }
     }
 
+
     public void initClient() throws Exception {
-        RemoteStreamEnvironment remoteStreamEnvironment = this.buildRemoteStreamEnvironment(new Configuration());
-        Configuration configuration = remoteStreamEnvironment.getClientConfiguration();
+        Configuration configuration = new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(),
+                new Configuration(), null, null, null).getClientConfiguration();
         log.info("Flink client configuration: {}", configuration);
         commonClusterClient = new RestClusterClient<>(configuration, UUID.randomUUID());
     }
@@ -107,7 +108,7 @@ public class FlinkSubmitter {
             TriConsumer<StreamTableEnvironment, Table, RuleFlinkSql> sink,
             TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, RuleFlinkSql> sources) {
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
-        RemoteStreamEnvironment rse = this.buildRemoteStreamEnvironment(config);
+        RemoteStreamEnvironment rse = this.buildRSE(config);
         StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());
 
         sources.accept(rse, ste, sql);
@@ -207,7 +208,7 @@ public class FlinkSubmitter {
      *
      * @param configuration flink 配置
      */
-    private RemoteStreamEnvironment buildRemoteStreamEnvironment(Configuration configuration) {
+    private RemoteStreamEnvironment buildRSE(Configuration configuration) {
         List<String> jars = FileListing.getFlinkJars();
 
         // 添加详细日志
@@ -236,9 +237,19 @@ public class FlinkSubmitter {
         log.info("JAR URLs: {}", Arrays.toString(urlArray));
         log.info("JAR Paths: {}", Arrays.toString(jarArray));
 
-        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(), configuration, jarArray, // JAR文件路径
+        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRpcPort(), configuration, jarArray, // JAR文件路径
                 urlArray, // JAR文件URL - 这个很重要！
                 null);
+    }
+
+    /**
+    * 通过配置项, 构建 flink 环境
+    *
+    * @param configuration flink 配置
+    */
+    private RemoteStreamEnvironment buildRemoteStreamEnvironmentForRest() {
+        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(), new Configuration(), null,
+                null, null);
     }
 
     /**
@@ -278,7 +289,6 @@ public class FlinkSubmitter {
                 log.error("failed to reconnect to Flink cluster: {}", reconnectException.getMessage());
             }
         } else {
-            // TODO 非可恢复的异常，需要告警
             log.error("Encountered non-recoverable error: {}", cause.getMessage());
         }
     }

@@ -36,7 +36,3 @@ echo "📦 Image details:"
 docker images | grep raffles
 
 echo "🎉 Build completed!"
-echo ""
-echo "To run the container:"
-echo "kubectl delete pod -l app=raffles -n app"
-echo "kubectl logs -f deployment/raffles -n app"
