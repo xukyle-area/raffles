@@ -171,18 +171,32 @@ public class FlinkSubmitter {
      */
     private Configuration buildConfiguration(String ruleName, @Nullable String savepointPath) {
         Configuration configuration = new Configuration();
+
         if (StringUtils.isNotBlank(savepointPath)) {
             configuration.set(SavepointConfigOptions.SAVEPOINT_PATH, savepointPath);
         }
+
+        // JobManager配置
         configuration.setString(JobManagerOptions.ADDRESS, flinkConfig.getHost());
         configuration.setInteger(JobManagerOptions.PORT, flinkConfig.getRpcPort());
         configuration.setString(RestOptions.ADDRESS, flinkConfig.getHost());
         configuration.setInteger(RestOptions.PORT, flinkConfig.getRestPort());
 
+        // 增加Akka帧大小到512MB
+        configuration.setString("akka.framesize", "512MB");
+        configuration.setString("akka.remote.artery.advanced.maximum-frame-size", "512MB");
+        configuration.setString("akka.remote.artery.advanced.maximum-large-frame-size", "512MB");
+
+        // 启用压缩
+        configuration.setString("akka.remote.artery.advanced.compression.enabled", "true");
+        configuration.setString("akka.remote.artery.advanced.compression.algorithm", "gzip");
+
+        // 其他配置...
         String jobId = JobID.generate().toString();
         configuration.setString(PipelineOptionsInternal.PIPELINE_FIXED_JOB_ID, jobId);
         configuration.setString(PipelineOptions.NAME, ruleName);
         configuration.set(PipelineOptions.JARS, JAR_FILES);
+
         log.info("Pipeline configuration - JARS: {}", configuration.get(PipelineOptions.JARS));
 
         return configuration;
