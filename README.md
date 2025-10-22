@@ -18,3 +18,10 @@
    ```shell
    kubectl logs -f deployment/raffles -n app
    ```
+
+5. xx
+
+```
+kubectl get pod -n app
+kubectl get pod raffles-5cd4b78d55-bt9w5 -n app -o yaml
+```

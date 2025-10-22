@@ -7,8 +7,8 @@ mvn clean package -DskipTests
 kubectl delete pod -l app=raffles -n app
 echo "Restarted Raffles pods in Kubernetes."
 echo "Use
-    kubectl get pods -n app
+kubectl get pods -n app
 to check pod status."
 echo "Use '
-    kubectl logs -f deployment/raffles -n app
+kubectl logs -f deployment/raffles -n app
 ' to view logs."
