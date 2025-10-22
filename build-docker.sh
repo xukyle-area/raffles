@@ -38,4 +38,5 @@ docker images | grep raffles
 echo "🎉 Build completed!"
 echo ""
 echo "To run the container:"
-echo "docker run -d -p 18080:18080 --name raffles raffles:latest"
+echo "kubectl delete pod -l app=raffles -n app"
+echo "kubectl logs -f deployment/raffles -n app"

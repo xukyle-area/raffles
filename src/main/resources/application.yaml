@@ -26,7 +26,7 @@ mybatis:
 
 flink:
   host: ${FLINK_HOST:localhost}
-  rest-port: ${FLINK_REST_PORT:9081}
+  rest-port: ${FLINK_REST_PORT:8081}
   rpc-port: ${FLINK_RPC_PORT:6123}
   savepoint-path: ${FLINK_SAVEPOINT_PATH:/tmp/flink-savepoints}
 

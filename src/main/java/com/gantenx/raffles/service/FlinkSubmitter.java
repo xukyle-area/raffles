@@ -299,7 +299,7 @@ public class FlinkSubmitter {
             return true;
         }
         // 其他类型的异常不认为是可恢复的
-        log.error("Detected non-recoverable error: {}", e.getMessage());
+        log.error("Detected non-recoverable error: {}", e.getMessage(), e);
         return false;
     }
 }
