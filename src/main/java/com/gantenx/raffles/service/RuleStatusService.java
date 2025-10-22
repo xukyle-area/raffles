@@ -19,7 +19,7 @@ public class RuleStatusService {
         String key = RULE_TO_EXPRESSION + ruleCode;
         try {
             expressionCache.put(key, sql);
-            log.debug("setLatestExpression, key: {}, sql: {}", key, sql);
+            log.info("setLatestExpression, key: {}, sql: {}", key, sql);
         } catch (Exception e) {
             log.error("setLatestExpression, key: {}", key, e);
         }
@@ -29,7 +29,7 @@ public class RuleStatusService {
         String key = RULE_TO_EXPRESSION + ruleCode;
         try {
             String expression = expressionCache.get(key);
-            log.debug("getLatestExpression, key: {}, expression: {}", key, expression);
+            log.info("getLatestExpression, key: {}, expression: {}", key, expression);
             return expression;
         } catch (Exception e) {
             log.error("getLatestExpression, key: {}", key, e);
@@ -42,7 +42,7 @@ public class RuleStatusService {
         String key = RULE_TO_VERSION + ruleCode;
         try {
             Integer version = versionCache.get(key);
-            log.debug("getLatestVersion, key: {}, version: {}", key, version);
+            log.info("getLatestVersion, key: {}, version: {}", key, version);
             return version;
         } catch (Exception e) {
             log.error("getLatestVersion, key: {}", key, e);
@@ -55,7 +55,7 @@ public class RuleStatusService {
         String key = RULE_TO_VERSION + ruleCode;
         try {
             versionCache.put(key, version);
-            log.debug("setLatestVersion, key: {}, version: {}", key, version);
+            log.info("setLatestVersion, key: {}, version: {}", key, version);
         } catch (Exception e) {
             log.error("setLatestVersion, key: {}", key, e);
         }

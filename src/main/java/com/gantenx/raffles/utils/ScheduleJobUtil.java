@@ -31,10 +31,7 @@ public class ScheduleJobUtil {
     public static Runnable wrapWithLogging(Runnable task, String taskName) {
         return () -> {
             try {
-                long begin = System.currentTimeMillis();
-                log.info("Start task {}", taskName);
                 task.run();
-                log.info("End task {}, cost {}ms", taskName, System.currentTimeMillis() - begin);
             } catch (Exception e) {
                 log.error("Error in {}", taskName, e);
             }
