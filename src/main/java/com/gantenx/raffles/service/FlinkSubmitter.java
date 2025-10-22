@@ -64,8 +64,6 @@ public class FlinkSubmitter {
             activeJobs = commonClusterClient.listJobs().get(3, TimeUnit.SECONDS).stream()
                     .filter(job -> !job.getJobState().isGloballyTerminalState()).distinct()
                     .collect(Collectors.toList());
-            activeJobs.stream().map(JobStatusMessage::getJobName).reduce((a, b) -> a + ", " + b)
-                    .ifPresent(o -> log.info("active jobs: {}", o));
         } catch (Exception e) {
             log.error("Failed to list jobs: {}", e.getMessage());
             this.handleClusterClientError(e);

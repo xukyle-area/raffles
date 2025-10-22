@@ -3,6 +3,7 @@ package com.gantenx.raffles.service;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
@@ -23,6 +24,7 @@ import com.gantenx.raffles.model.RuleFlinkSql;
 import com.gantenx.raffles.sink.SinkService;
 import com.gantenx.raffles.source.SourceService;
 import com.gantenx.raffles.utils.GsonUtils;
+import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -57,6 +59,11 @@ public class RuleSubmitter {
                     .ifPresent(o -> this.sourceMap.put(category, o::source));
             Optional.ofNullable(sinks.get(map.get(Direction.SINK))).ifPresent(o -> this.sinkMap.put(category, o::sink));
         }
+    }
+
+    @PostConstruct
+    private void init() {
+        ScheduledThreadPool.scheduleWithFixedDelay(this::checkAndCancelJobs, 10, "flink-keep-alive");
     }
 
     private <T, K> Map<K, T> buildServiceMap(Set<T> services, Function<T, K> keyExtractor) {
