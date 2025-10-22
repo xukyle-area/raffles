@@ -36,6 +36,8 @@ public class RuleService {
         Integer latestVersion = ruleStatusService.getLatestVersion(rule.getName());
         boolean expressionEqual = Objects.equals(expression, latestExpression);
         boolean versionEqual = Objects.equals(version, latestVersion);
+        log.info("isDuplicateRule, ruleName: {}, expressionEqual: {}, versionEqual: {}", rule.getName(),
+                expressionEqual, versionEqual);
         return expressionEqual && versionEqual;
     }
 
