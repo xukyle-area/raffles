@@ -1,8 +1,11 @@
 package com.gantenx.raffles.config;
 
+import java.util.LinkedList;
+
 public enum Category {
     CALCULATE(1, "calculate", "计算类");
 
+    LinkedList<Category> subCategories = new LinkedList<>();
     private final int id;
     private final String name;
     private final String description;
