@@ -1,5 +1,6 @@
 package com.gantenx.raffles.sourcer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class MysqlSourcer extends AbstractSourcer {
+public class MysqlSourcer implements AbstractSourcer, Serializable {
 
     @Autowired
     private TableDDLDao tableDDLDao;

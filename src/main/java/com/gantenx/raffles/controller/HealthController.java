@@ -2,6 +2,7 @@ package com.gantenx.raffles.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +17,9 @@ import com.gantenx.raffles.config.ConfigManager;
 @RequestMapping("/health")
 public class HealthController {
 
+    @Autowired
+    ConfigManager configManager;
+
     @GetMapping
     public Map<String, Object> health() {
         Map<String, Object> result = new HashMap<>();
@@ -24,7 +28,7 @@ public class HealthController {
 
         // 检查配置是否正常加载
         try {
-            CategoryConfig config = ConfigManager.getCategoryConfig(Category.CALCULATE);
+            CategoryConfig config = configManager.getCategoryConfig(Category.CALCULATE);
             if (config != null) {
                 result.put("config", "LOADED");
                 result.put("configEnabled", config.isEnable());

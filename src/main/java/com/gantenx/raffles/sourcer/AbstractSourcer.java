@@ -6,13 +6,13 @@ import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 
-public abstract class AbstractSourcer {
+public interface AbstractSourcer {
 
     public abstract DataType getDataType();
 
     public abstract void source(StreamExecutionEnvironment env, StreamTableEnvironment ste, FlinkRule rule);
 
-    public void checkType(CategoryConfig.DataTypeConfig sourceConfig) {
+    public default void checkType(CategoryConfig.DataTypeConfig sourceConfig) {
         if (!this.getDataType().equals(sourceConfig.getDataType())) {
             throw new RuntimeException("source type not match, expect: " + this.getDataType().getCode() + ", actual: "
                     + sourceConfig.getDataType().getCode());

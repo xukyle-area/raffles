@@ -7,10 +7,6 @@ import javax.annotation.Resource;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.runtime.client.JobStatusMessage;
-import org.apache.flink.streaming.api.environment.RemoteStreamEnvironment;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -35,10 +31,12 @@ public class RuleSubmitter {
     private FlinkSubmitter flinkSubmitter;
     @Resource
     private RuleService ruleService;
+    @Autowired
+    ConfigManager configManager;
 
-    private final Map<Category, TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule>> sourceMap =
-            new HashMap<>();
-    private final Map<Category, TriConsumer<StreamTableEnvironment, Table, FlinkRule>> sinkMap = new HashMap<>();
+
+    private final Map<Category, AbstractSourcer> sourceMap = new HashMap<>();
+    private final Map<Category, AbstractSinker> sinkMap = new HashMap<>();
 
     @Autowired
     private void sourceAndSinkServices(Set<AbstractSourcer> sourcesSet, Set<AbstractSinker> sinksSet) {
@@ -46,12 +44,22 @@ public class RuleSubmitter {
         Map<DataType, AbstractSinker> sinks = buildServiceMap(sinksSet, AbstractSinker::getDataType);
 
         for (Category category : Category.values()) {
-            CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
+            CategoryConfig categoryConfig = configManager.getCategoryConfig(category);
+            if (categoryConfig == null) {
+                log.warn("No configuration found for category: {}", category);
+                continue;
+            }
+
+            if (categoryConfig.getSourceConfig() == null || categoryConfig.getSinkConfig() == null) {
+                log.warn("Incomplete configuration for category: {}", category);
+                continue;
+            }
+
             DataType sourceType = categoryConfig.getSourceConfig().getDataType();
             DataType sinkType = categoryConfig.getSinkConfig().getDataType();
 
-            Optional.ofNullable(sources.get(sourceType)).ifPresent(source -> sourceMap.put(category, source::source));
-            Optional.ofNullable(sinks.get(sinkType)).ifPresent(sink -> sinkMap.put(category, sink::sink));
+            Optional.ofNullable(sources.get(sourceType)).ifPresent(source -> sourceMap.put(category, source));
+            Optional.ofNullable(sinks.get(sinkType)).ifPresent(sink -> sinkMap.put(category, sink));
         }
     }
 
@@ -102,8 +110,8 @@ public class RuleSubmitter {
             String savepoint = this.cancel(rule.getName());
             Category category = rule.getCategory();
 
-            TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink = sinkMap.get(category);
-            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> source = sourceMap.get(category);
+            AbstractSinker sink = sinkMap.get(category);
+            AbstractSourcer source = sourceMap.get(category);
             if (sink == null || source == null) {
                 log.error("No sink or source configured for category: {}", category);
                 return;

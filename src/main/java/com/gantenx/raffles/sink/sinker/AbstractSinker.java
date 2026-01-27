@@ -6,12 +6,13 @@ import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 
-public abstract class AbstractSinker {
+public interface AbstractSinker {
+    
     public abstract DataType getDataType();
 
     public abstract void sink(StreamTableEnvironment ste, Table table, FlinkRule rule);
 
-    public void checkType(CategoryConfig.DataTypeConfig sinkConfig) {
+    public default void checkType(CategoryConfig.DataTypeConfig sinkConfig) {
         if (!this.getDataType().equals(sinkConfig.getDataType())) {
             throw new RuntimeException("sink type not match, expect: " + this.getDataType().getCode() + ", actual: "
                     + sinkConfig.getDataType().getCode());

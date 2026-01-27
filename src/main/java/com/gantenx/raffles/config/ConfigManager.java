@@ -12,24 +12,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConfigManager {
 
-    private static CategoryConfigProperties categoryConfigProperties;
+    private final CategoryConfigProperties instanceConfigProperties;
 
     public ConfigManager(CategoryConfigProperties categoryConfigProperties) {
-        ConfigManager.categoryConfigProperties = categoryConfigProperties;
+        this.instanceConfigProperties = categoryConfigProperties;
     }
 
-    public static CategoryConfig getCategoryConfig(int categoryId) {
-        Category category = Category.getCategory(categoryId);
-        return getCategoryConfig(category);
-    }
-
-    public static CategoryConfig getCategoryConfig(Category category) {
-        Map<Category, CategoryConfig> configMap = categoryConfigProperties.getCategoryConfigMap();
+    // 实例方法，直接使用注入的配置
+    public CategoryConfig getCategoryConfig(Category category) {
+        Map<Category, CategoryConfig> configMap = instanceConfigProperties.getCategoryConfigMap();
+        if (configMap == null) {
+            return null;
+        }
         return configMap.get(category);
     }
 
-    public static List<CategoryConfig> getCategoryConfigList() {
-        Map<Category, CategoryConfig> configMap = categoryConfigProperties.getCategoryConfigMap();
+    public List<CategoryConfig> getCategoryConfigList() {
+        Map<Category, CategoryConfig> configMap = instanceConfigProperties.getCategoryConfigMap();
         return new ArrayList<>(configMap.values());
     }
 }

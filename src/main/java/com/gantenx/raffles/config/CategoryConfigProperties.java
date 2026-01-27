@@ -62,8 +62,10 @@ public class CategoryConfigProperties {
         CategoryConfig.DataTypeConfig config = new CategoryConfig.DataTypeConfig();
 
         // 设置数据类型
-        DataType dataType = DataType.valueOf(item.getType().toUpperCase());
-        config.setDataType(dataType);
+        if (item.getType() != null) {
+            DataType dataType = DataType.valueOf(item.getType().toUpperCase());
+            config.setDataType(dataType);
+        }
 
         // 设置 Kafka 配置
         if (item.getKafka() != null) {

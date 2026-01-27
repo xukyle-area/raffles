@@ -1,5 +1,6 @@
 package com.gantenx.raffles.sink.sinker;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.flink.table.api.Table;
@@ -19,12 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class KafkaSink extends AbstractSinker {
+public class KafkaSink implements AbstractSinker, Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final Map<Category, AbstractSinkBuilder> sinkMap = new HashMap<>();
 
     public KafkaSink() {
-        sinkMap.put(Category.CALCULATE, new SimpleSinkBuilder<>(CalculateOutput::new));
+        sinkMap.put(Category.CALCULATE, new SimpleSinkBuilder<>(CalculateOutput.class));
     }
 
     @Override

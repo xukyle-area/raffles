@@ -1,5 +1,6 @@
 package com.gantenx.raffles.sourcer;
 
+import java.io.Serializable;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class KafkaSourcer extends AbstractSourcer {
+public class KafkaSourcer implements AbstractSourcer, Serializable {
+    private static final long serialVersionUID = 1L;
 
-    private static final String KAFKA_TABLE = "kafka_table";
+    private static final String KAFKA_TABLE = "calculate_input";
     private static final String GROUP_OFFSETS = "group-offsets";
 
     @Override

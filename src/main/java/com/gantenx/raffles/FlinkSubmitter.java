@@ -29,12 +29,13 @@ import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.FlinkRule;
+import com.gantenx.raffles.sink.sinker.AbstractSinker;
+import com.gantenx.raffles.sourcer.AbstractSourcer;
 import com.gantenx.raffles.utils.FileListing;
 import lombok.extern.slf4j.Slf4j;
 
@@ -95,19 +96,18 @@ public class FlinkSubmitter {
     /**
      * @param sql           运行在 flink 上的 sql
      * @param savepointPath savepoint 地址，可选
-     * @param sink          自定义注册sink
-     * @param sources       自定义注册数据源
+     * @param sinker        自定义注册sink
+     * @param sourcer       自定义注册数据源
      */
-    public boolean submit(FlinkRule sql, @Nullable String savepointPath,
-            TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink,
-            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> sources) {
+    public boolean submit(FlinkRule sql, @Nullable String savepointPath, AbstractSinker sinker,
+            AbstractSourcer sourcer) {
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
         RemoteStreamEnvironment rse = this.buildRSE(config);
         StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());
 
-        sources.accept(rse, ste, sql);
+        sourcer.source(rse, ste, sql);
         Table table = ste.sqlQuery(sql.getExecutableSql());
-        sink.accept(ste, table, sql);
+        sinker.sink(ste, table, sql);
 
         try (RestClusterClient<UUID> client = new RestClusterClient<>(config, UUID.randomUUID())) {
             CompletableFuture<JobID> completableFuture = client.submitJob(this.buildJobGraph(rse, config));

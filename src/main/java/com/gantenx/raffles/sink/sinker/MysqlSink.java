@@ -1,6 +1,7 @@
 package com.gantenx.raffles.sink.sinker;
 
 
+import java.io.Serializable;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class MysqlSink extends AbstractSinker {
+public class MysqlSink implements AbstractSinker, Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Override
     public DataType getDataType() {

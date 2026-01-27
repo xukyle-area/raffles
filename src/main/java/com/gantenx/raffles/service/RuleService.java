@@ -31,6 +31,8 @@ public class RuleService {
     private SqlTemplateDao sqlTemplateDao;
     @Autowired
     private RuleStatusCache ruleStatusService;
+    @Autowired
+    ConfigManager configManager;
 
     /**
      * 判断规则是否为重复规则（未发生变更）
@@ -84,7 +86,7 @@ public class RuleService {
         flinkRule.setCategory(category);
         if (category != null) {
             flinkRule.setCategoryName(category.getName());
-            flinkRule.setCategoryConfig(ConfigManager.getCategoryConfig(category));
+            flinkRule.setCategoryConfig(configManager.getCategoryConfig(category));
         }
         int sqlTemplateId = rule.getSqlTemplateId();
         SqlTemplate feature = sqlTemplateDao.selectById(sqlTemplateId);
