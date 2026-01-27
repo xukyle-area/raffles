@@ -1,4 +1,4 @@
-package com.gantenx.raffles.service;
+package com.gantenx.raffles;
 
 import java.io.EOFException;
 import java.io.File;

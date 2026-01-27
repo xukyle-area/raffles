@@ -1,4 +1,4 @@
-package com.gantenx.raffles.service;
+package com.gantenx.raffles;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-public class FlinkScheduler {
+public class Scheduler {
 
     @Autowired
     private RuleSubmitter ruleSubmitter;
