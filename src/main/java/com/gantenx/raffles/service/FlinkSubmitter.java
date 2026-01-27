@@ -31,11 +31,11 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.utils.FileListing;
-import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -55,7 +55,6 @@ public class FlinkSubmitter {
     @PostConstruct
     private void init() throws Exception {
         this.initCommonClusterClient();
-        ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
     }
 
     /**
@@ -63,18 +62,20 @@ public class FlinkSubmitter {
      * 同时检测 commonClusterClient 是否正常
      * 如果 commonClusterClient 异常，重新初始化
      */
+    @Scheduled(cron = "*/3 * * * * ?")
     private void keepAlive() {
         try {
+            log.info("Checking Flink cluster connection and updating active jobs...");
             activeJobs = commonClusterClient.listJobs().get(3, TimeUnit.SECONDS).stream()
                     .filter(job -> !job.getJobState().isGloballyTerminalState()).distinct()
-                    .collect(Collectors.toList());
+                    .peek(o -> log.info(o.toString())).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Failed to list jobs: {}", e.getMessage());
             this.handleClusterClientError(e);
         }
     }
 
-    @SuppressWarnings({"resource", "deprecation"})
+    @SuppressWarnings({"resource"})
     private void initCommonClusterClient() throws Exception {
         Configuration configuration = new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(),
                 new Configuration(), null, null, null).getClientConfiguration();

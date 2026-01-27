@@ -3,7 +3,6 @@ package com.gantenx.raffles.service;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.JobStatus;
@@ -13,6 +12,7 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.function.TriConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.CategoryConfig;
@@ -21,7 +21,6 @@ import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.sink.sinker.AbstractSinker;
 import com.gantenx.raffles.sourcer.AbstractSourcer;
-import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,16 +58,10 @@ public class RuleSubmitter {
     }
 
     /**
-     * 定时清理孤立的 Flink 任务（数据库中不存在但在集群中运行的任务）
-     */
-    @PostConstruct
-    private void init() {
-        ScheduledThreadPool.scheduleWithFixedDelay(this::cleanupJobs, 10, "cleanup-orphaned-jobs");
-    }
-
-    /**
      * 清理孤立任务：检查 Flink 集群中运行的任务是否在数据库规则中存在，不存在则取消
+     * 每10秒执行一次
      */
+    @Scheduled(fixedDelay = 10_000)
     private void cleanupJobs() {
         Set<String> validRules = ruleService.getRules().stream().map(FlinkRule::getName).collect(Collectors.toSet());
         flinkSubmitter.getActiveJobs().stream().filter(job -> !validRules.contains(job.getJobName())).forEach(job -> {

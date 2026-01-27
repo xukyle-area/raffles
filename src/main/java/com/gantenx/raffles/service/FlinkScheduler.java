@@ -1,10 +1,9 @@
 package com.gantenx.raffles.service;
 
-import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
-import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -17,14 +16,9 @@ public class FlinkScheduler {
     @Autowired
     private RuleSubmitter ruleSubmitter;
 
-    @PostConstruct
-    public void init() {
-        ScheduledThreadPool.scheduleWithFixedDelay(() -> {
-            try {
-                ruleSubmitter.submit(Category.CALCULATE);
-            } catch (Exception e) {
-                log.error("Error submitting Flink jobs: ", e);
-            }
-        }, 120, 30, "FlinkSchedule");
+    @Scheduled(cron = "0 0/3 * * * ?")
+    public void submitCalculate() {
+        log.info("Starting scheduled Flink job submission...");
+        ruleSubmitter.submit(Category.CALCULATE);
     }
 }
