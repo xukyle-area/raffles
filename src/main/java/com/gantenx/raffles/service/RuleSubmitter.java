@@ -16,21 +16,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.CategoryConfig;
-import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
 import com.gantenx.raffles.config.ConfigManager;
 import com.gantenx.raffles.config.consists.DataType;
-import com.gantenx.raffles.config.consists.Direction;
 import com.gantenx.raffles.model.FlinkRule;
-import com.gantenx.raffles.sink.SinkService;
-import com.gantenx.raffles.source.SourceService;
+import com.gantenx.raffles.sink.sinker.AbstractSinker;
+import com.gantenx.raffles.sourcer.AbstractSourcer;
 import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 public class RuleSubmitter {
+
     @Resource
-    private RuleStatusService ruleStatusService;
+    private RuleStatusCache ruleStatusCache;
     @Resource
     private FlinkSubmitter flinkSubmitter;
     @Resource
@@ -41,65 +40,58 @@ public class RuleSubmitter {
     private final Map<Category, TriConsumer<StreamTableEnvironment, Table, FlinkRule>> sinkMap = new HashMap<>();
 
     @Autowired
-    public void sourceAndSinkServices(Set<SourceService> sourcesSet, Set<SinkService> sinksSet) {
-        Map<DataType, SourceService> sources = this.buildServiceMap(sourcesSet, SourceService::getDataType);
-        Map<DataType, SinkService> sinks = this.buildServiceMap(sinksSet, SinkService::getDataType);
+    private void sourceAndSinkServices(Set<AbstractSourcer> sourcesSet, Set<AbstractSinker> sinksSet) {
+        Map<DataType, AbstractSourcer> sources = buildServiceMap(sourcesSet, AbstractSourcer::getDataType);
+        Map<DataType, AbstractSinker> sinks = buildServiceMap(sinksSet, AbstractSinker::getDataType);
 
         for (Category category : Category.values()) {
             CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
-            DataTypeConfig sourceConfig = categoryConfig.getSourceConfig();
-            DataTypeConfig sinkConfig = categoryConfig.getSinkConfig();
+            DataType sourceType = categoryConfig.getSourceConfig().getDataType();
+            DataType sinkType = categoryConfig.getSinkConfig().getDataType();
 
-            Map<Direction, DataType> map = new HashMap<>();
-            map.put(Direction.SOURCE, sourceConfig.getDataType());
-            map.put(Direction.SINK, sinkConfig.getDataType());
-
-            Optional.ofNullable(sources.get(map.get(Direction.SOURCE)))
-                    .ifPresent(o -> this.sourceMap.put(category, o::source));
-            Optional.ofNullable(sinks.get(map.get(Direction.SINK))).ifPresent(o -> this.sinkMap.put(category, o::sink));
+            Optional.ofNullable(sources.get(sourceType)).ifPresent(source -> sourceMap.put(category, source::source));
+            Optional.ofNullable(sinks.get(sinkType)).ifPresent(sink -> sinkMap.put(category, sink::sink));
         }
-    }
-
-    @PostConstruct
-    private void init() {
-        ScheduledThreadPool.scheduleWithFixedDelay(this::checkAndCancelJobs, 10, "flink-keep-alive");
     }
 
     private <T, K> Map<K, T> buildServiceMap(Set<T> services, Function<T, K> keyExtractor) {
         return services.stream().collect(Collectors.toMap(keyExtractor, Function.identity()));
     }
 
+    /**
+     * 定时清理孤立的 Flink 任务（数据库中不存在但在集群中运行的任务）
+     */
+    @PostConstruct
+    private void init() {
+        ScheduledThreadPool.scheduleWithFixedDelay(this::cleanupJobs, 10, "cleanup-orphaned-jobs");
+    }
 
     /**
-     * 检查flink任务是否存在，不存在则取消
+     * 清理孤立任务：检查 Flink 集群中运行的任务是否在数据库规则中存在，不存在则取消
      */
-    public void checkAndCancelJobs() {
-        List<FlinkRule> allRules = ruleService.getRules();
-        Set<String> flinkCode = allRules.stream().map(FlinkRule::getName).collect(Collectors.toSet());
-        List<JobStatusMessage> activeJobs = flinkSubmitter.getActiveJobs();
-        for (JobStatusMessage activeJob : activeJobs) {
-            String jobName = activeJob.getJobName();
-            JobID jobId = activeJob.getJobId();
-            if (!flinkCode.contains(jobName)) {
-                log.info("cancel job, job name:{}, job id:{}", jobName, jobId);
-                flinkSubmitter.cancelJob(jobId);
-            }
-        }
+    private void cleanupJobs() {
+        Set<String> validRules = ruleService.getRules().stream().map(FlinkRule::getName).collect(Collectors.toSet());
+        flinkSubmitter.getActiveJobs().stream().filter(job -> !validRules.contains(job.getJobName())).forEach(job -> {
+            log.info("Found orphaned job, cancelling - name: {}, id: {}", job.getJobName(), job.getJobId());
+            flinkSubmitter.cancelJob(job.getJobId());
+        });
     }
 
     public void submit(Category category) {
-        CategoryConfig categoryConfig = ConfigManager.getCategoryConfig(category);
+        // 获取当前类别的所有规则
+        List<FlinkRule> rules = ruleService.getRules(category);
+        // 获取当前正在运行的任务名称列表
+        Set<String> actives =
+                flinkSubmitter.getActiveJobs().stream().map(JobStatusMessage::getJobName).collect(Collectors.toSet());;
 
-        boolean batch = categoryConfig.isBatch();
-        log.info("submit, category:{}, batch:{}", category, batch);
-
-        Set<String> activeNames = flinkSubmitter.getActiveJobNames();
-
-        List<FlinkRule> rules = ruleService.getRules();
-
-        rules.stream().filter(rule -> category.equals(rule.getCategory()))
-                .filter(rule -> batch || !activeNames.contains(rule.getName()) || !ruleService.isDuplicateRule(rule))
-                .peek(rule -> log.info("after filter, submit rule:{}", rule.getName())).forEach(this::submit);
+        for (FlinkRule rule : rules) {
+            // 批处理任务无需关心规则是否变更或者在运行中，每次都从头运行
+            // 任务没有在运行中，需要提交。或者
+            // 在规则变更时提交，避免重复提交
+            if (category.isBatch() || !actives.contains(rule.getName()) || ruleService.isDuplicateRule(rule)) {
+                this.submitRule(rule);
+            }
+        }
     }
 
     /**
@@ -108,56 +100,61 @@ public class RuleSubmitter {
      * 2. 提交任务
      * 3. 更新缓存
      */
-    private void submit(FlinkRule rule) {
-        log.info("submit rule: {}", rule);
-        String ruleName = rule.getName();
-        String savepoint = this.cancelJobs(ruleName);
-        Object category = rule.getCategory();
-        TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink = sinkMap.get(category);
-        TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> sources = sourceMap.get(category);
+    private void submitRule(FlinkRule rule) {
+        try {
+            log.info("Submitting rule: {}", rule.getName());
 
-        boolean success = flinkSubmitter.submit(rule, savepoint, sink, sources);
-        if (success) {
-            this.updateRuleStatus(rule);
+            String savepoint = this.cancel(rule.getName());
+            Category category = rule.getCategory();
+
+            TriConsumer<StreamTableEnvironment, Table, FlinkRule> sink = sinkMap.get(category);
+            TriConsumer<RemoteStreamEnvironment, StreamTableEnvironment, FlinkRule> source = sourceMap.get(category);
+            if (sink == null || source == null) {
+                log.error("No sink or source configured for category: {}", category);
+                return;
+            }
+            boolean success = flinkSubmitter.submit(rule, savepoint, sink, source);
+            if (success) {
+                ruleStatusCache.updateRuleState(rule);
+                log.info("Successfully submitted rule: {}", rule.getName());
+            } else {
+                log.error("Failed to submit rule: {}", rule.getName());
+            }
+        } catch (Exception e) {
+            log.error("Error submitting rule: {}", rule.getName(), e);
         }
     }
 
     /**
      * 按照 ruleName 取消任务，并返回 savepoint
-     * 1. 状态正常的任务：取消并返回这个任务的 savepoint
-     * 2. 状态异常的任务：直接取消
+     * RUNNING 状态：取消并保存 savepoint
+     * 其他状态：直接取消
      */
-    private String cancelJobs(String ruleName) {
-        // 筛选出所有与当前 ruleName 匹配的任务
-        List<JobStatusMessage> jobs = flinkSubmitter.getActiveJobs().stream()
-                .peek(job -> log.info("found active job for ruleName: {}, jobName: {}", ruleName, job.getJobName()))
+    private String cancel(String ruleName) {
+        List<JobStatusMessage> matchingJobs = flinkSubmitter.getActiveJobs().stream()
                 .filter(job -> job.getJobName().equals(ruleName)).collect(Collectors.toList());
-        log.info("found {} active jobs for ruleName: {}", jobs.size(), ruleName);
-        String savepoint = null;
-        for (JobStatusMessage job : jobs) {
-            log.info("cancel job, job name:{}, jobId: {}, jobState: {}", job.getJobName(), job.getJobId(),
-                    job.getJobState());
+
+        if (matchingJobs.isEmpty()) {
+            log.debug("No active jobs found for rule: {}", ruleName);
+            return null;
+        }
+
+        log.info("Found {} active job(s) for rule: {}", matchingJobs.size(), ruleName);
+        String lastSavepoint = null;
+
+        for (JobStatusMessage job : matchingJobs) {
             JobID jobId = job.getJobId();
-            if (JobStatus.RUNNING.equals(job.getJobState())) {
-                savepoint = flinkSubmitter.cancelJobWithSavepoint(job.getJobName(), jobId);
+            JobStatus jobState = job.getJobState();
+
+            log.info("Cancelling job: {}, state: {}", jobId, jobState);
+
+            if (JobStatus.RUNNING.equals(jobState)) {
+                lastSavepoint = flinkSubmitter.cancelJobWithSavepoint(job.getJobName(), jobId);
             } else {
                 flinkSubmitter.cancelJob(jobId);
             }
-            log.info("cancel job success, jobId: {}", jobId);
         }
-        // 返回任务的 savepoint
-        return savepoint;
-    }
 
-    /**
-     * 在任务提交完成后，缓存这些任务的：
-     * 1. version
-     * 2. expression，也就是可执行的 sql 语句
-     * 上面字段变动之后，任务会被取消，再重新提交
-     */
-    private void updateRuleStatus(FlinkRule rule) {
-        String key = rule.getName();
-        ruleStatusService.setLatestExpression(key, rule.getExecutableSql() + rule.getParams());
-        ruleStatusService.setLatestVersion(key, rule.getVersion());
+        return lastSavepoint;
     }
 }

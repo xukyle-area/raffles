@@ -1,4 +1,4 @@
-package com.gantenx.raffles.sink;
+package com.gantenx.raffles.sink.sinker;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,19 +9,22 @@ import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
-import com.gantenx.raffles.config.calculate.CalculateSinkBuilder;
+import com.gantenx.raffles.config.calculate.CalculateOutput;
 import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
+import com.gantenx.raffles.sink.Sinker;
+import com.gantenx.raffles.sink.builder.AbstractSinkBuilder;
+import com.gantenx.raffles.sink.builder.SimpleSinkBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class KafkaSink implements SinkService {
+public class KafkaSink extends AbstractSinker {
 
-    private final Map<Category, SinkBuilder> sinkMap = new HashMap<>();
+    private final Map<Category, AbstractSinkBuilder> sinkMap = new HashMap<>();
 
     public KafkaSink() {
-        sinkMap.put(Category.CALCULATE, new CalculateSinkBuilder());
+        sinkMap.put(Category.CALCULATE, new SimpleSinkBuilder<>(CalculateOutput::new));
     }
 
     @Override
@@ -34,8 +37,8 @@ public class KafkaSink implements SinkService {
         DataTypeConfig sinkConfig = rule.getCategoryConfig().getSinkConfig();
         this.checkType(sinkConfig);
         CategoryConfig.Kafka kafkaConfig = sinkConfig.getKafka();
-        RuleSink sinkFunction =
-                new RuleSink(rule, sinkMap.get(rule.getCategory()), kafkaConfig.getServers(), kafkaConfig.getTopic());
+        Sinker sinkFunction =
+                new Sinker(rule, sinkMap.get(rule.getCategory()), kafkaConfig.getServers(), kafkaConfig.getTopic());
         ste.toRetractStream(table, Row.class).addSink(sinkFunction).name(rule.getName() + "_sink");
     }
 }

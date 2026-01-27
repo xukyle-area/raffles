@@ -1,6 +1,9 @@
 package com.gantenx.raffles.service;
 
+import java.io.EOFException;
 import java.io.File;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +23,7 @@ import org.apache.flink.runtime.client.JobStatusMessage;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.runtime.messages.Acknowledge;
+import org.apache.flink.runtime.rest.util.RestClientException;
 import org.apache.flink.streaming.api.environment.RemoteStreamEnvironment;
 import org.apache.flink.streaming.api.graph.StreamGraph;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -49,8 +53,8 @@ public class FlinkSubmitter {
     private List<JobStatusMessage> activeJobs;
 
     @PostConstruct
-    public void init() throws Exception {
-        this.initClient();
+    private void init() throws Exception {
+        this.initCommonClusterClient();
         ScheduledThreadPool.scheduleWithFixedDelay(this::keepAlive, 10, "flink-keep-alive");
     }
 
@@ -59,7 +63,7 @@ public class FlinkSubmitter {
      * 同时检测 commonClusterClient 是否正常
      * 如果 commonClusterClient 异常，重新初始化
      */
-    public void keepAlive() {
+    private void keepAlive() {
         try {
             activeJobs = commonClusterClient.listJobs().get(3, TimeUnit.SECONDS).stream()
                     .filter(job -> !job.getJobState().isGloballyTerminalState()).distinct()
@@ -70,8 +74,8 @@ public class FlinkSubmitter {
         }
     }
 
-
-    public void initClient() throws Exception {
+    @SuppressWarnings({"resource", "deprecation"})
+    private void initCommonClusterClient() throws Exception {
         Configuration configuration = new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(),
                 new Configuration(), null, null, null).getClientConfiguration();
         log.info("Flink client configuration: {}", configuration);
@@ -85,15 +89,6 @@ public class FlinkSubmitter {
      */
     public List<JobStatusMessage> getActiveJobs() {
         return this.activeJobs == null ? Collections.emptyList() : this.activeJobs;
-    }
-
-    /**
-     * 获取当前正在运行的任务的名称
-     *
-     * @return 当前正在运行的任务的名称
-     */
-    public Set<String> getActiveJobNames() {
-        return this.getActiveJobs().stream().map(JobStatusMessage::getJobName).collect(Collectors.toSet());
     }
 
     /**
@@ -241,16 +236,6 @@ public class FlinkSubmitter {
     }
 
     /**
-    * 通过配置项, 构建 flink 环境
-    *
-    * @param configuration flink 配置
-    */
-    private RemoteStreamEnvironment buildRemoteStreamEnvironmentForRest() {
-        return new RemoteStreamEnvironment(flinkConfig.getHost(), flinkConfig.getRestPort(), new Configuration(), null,
-                null, null);
-    }
-
-    /**
      * 构建提交的 job
      *
      * @param remoteStreamEnvironment flink 环境
@@ -281,7 +266,7 @@ public class FlinkSubmitter {
             log.info("recoverable connection error. try to reconnect to Flink cluster...");
             try {
                 commonClusterClient.close();
-                this.initClient();
+                this.initCommonClusterClient();
                 log.info("reconnection to Flink cluster successfully.");
             } catch (Exception reconnectException) {
                 log.error("failed to reconnect to Flink cluster: {}", reconnectException.getMessage());
@@ -299,10 +284,8 @@ public class FlinkSubmitter {
      */
     private boolean isRecoverableError(Throwable e) {
         // 检查是否为连接关闭相关的异常，可以尝试恢复连接
-        if (e instanceof java.net.SocketException || e instanceof java.net.SocketTimeoutException
-                || e instanceof java.io.EOFException
-                || (e instanceof org.apache.flink.runtime.rest.util.RestClientException
-                        && e.getCause() instanceof java.net.SocketException)) {
+        if (e instanceof SocketException || e instanceof SocketTimeoutException || e instanceof EOFException
+                || (e instanceof RestClientException && e.getCause() instanceof SocketException)) {
             log.error("Detected connection issue: {}", e.getMessage());
             return true;
         }

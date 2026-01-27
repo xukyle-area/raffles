@@ -7,9 +7,12 @@ import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.utils.ScheduledThreadPool;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 定时提交 Flink 任务
+ */
 @Slf4j
 @Service
-public class FlinkSchedule {
+public class FlinkScheduler {
 
     @Autowired
     private RuleSubmitter ruleSubmitter;

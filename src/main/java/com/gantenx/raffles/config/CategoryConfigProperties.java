@@ -44,7 +44,6 @@ public class CategoryConfigProperties {
         CategoryConfig config = new CategoryConfig();
         config.setCategory(category);
         config.setEnable(item.isEnable());
-        config.setBatch(item.isBatch());
 
         // 转换源配置
         if (item.getSource() != null) {
@@ -94,7 +93,6 @@ public class CategoryConfigProperties {
     @Data
     public static class CategoryConfigItem {
         private boolean enable = true;
-        private boolean batch = false;
         private DataTypeConfigItem source;
         private DataTypeConfigItem sink;
     }

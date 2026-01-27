@@ -1,4 +1,4 @@
-package com.gantenx.raffles.source;
+package com.gantenx.raffles.sourcer;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -6,13 +6,15 @@ import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.calculate.CalculateInput;
 import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.kafka.KafkaRegisterUtils;
+import com.gantenx.raffles.kafka.KafkaTableSource;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.utils.FindInSet;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class KafkaSource implements SourceService {
+public class KafkaSourcer extends AbstractSourcer {
 
     private static final String KAFKA_TABLE = "kafka_table";
     private static final String GROUP_OFFSETS = "group-offsets";
@@ -39,7 +41,7 @@ public class KafkaSource implements SourceService {
         log.info("KafkaTableSource servers: {}", kafkaTableSource.getServers());
         log.info("KafkaTableSource topic: {}", kafkaTableSource.getTopic());
 
-        FlinkKafkaRegister.registerKafkaTable(env, ste, kafkaTableSource, "open-account-group");
+        KafkaRegisterUtils.registerKafkaTable(env, ste, kafkaTableSource, "open-account-group");
         ste.createTemporarySystemFunction("find_in_set", new FindInSet());
     }
 

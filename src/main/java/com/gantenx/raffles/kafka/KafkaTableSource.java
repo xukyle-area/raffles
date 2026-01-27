@@ -1,4 +1,4 @@
-package com.gantenx.raffles.source;
+package com.gantenx.raffles.kafka;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

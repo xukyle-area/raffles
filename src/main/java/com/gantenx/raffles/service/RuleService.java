@@ -18,17 +18,25 @@ import com.gantenx.raffles.utils.GsonUtils;
 import com.gantenx.raffles.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 用于构建 FlinkRule 对象
+ */
 @Slf4j
 @Service
 public class RuleService {
+
     @Autowired
     private RuleDao ruleDao;
     @Autowired
     private SqlTemplateDao sqlTemplateDao;
-
     @Autowired
-    private RuleStatusService ruleStatusService;
+    private RuleStatusCache ruleStatusService;
 
+    /**
+     * 判断规则是否为重复规则（未发生变更）
+     * @param rule  要检查的规则
+     * @return true 如果规则未变更，false 如果规则已变更
+     */
     public boolean isDuplicateRule(FlinkRule rule) {
         String expression = rule.getExecutableSql() + rule.getParams();
         String latestExpression = ruleStatusService.getLatestExpression(rule.getName());
@@ -36,22 +44,26 @@ public class RuleService {
         Integer latestVersion = ruleStatusService.getLatestVersion(rule.getName());
         boolean expressionEqual = Objects.equals(expression, latestExpression);
         boolean versionEqual = Objects.equals(version, latestVersion);
-        log.info("isDuplicateRule, ruleName: {}, expressionEqual: {}, versionEqual: {}", rule.getName(),
-                expressionEqual, versionEqual);
         return expressionEqual && versionEqual;
     }
 
     /**
-     * 用于获取所有的规则，处理:
-     * 1. 数据为空
-     * 2. 数据转换成业务实体
-     * 3. 删除执行 sql 为空的规则
-     *
-     * @return 所有规则
+     * 获取所有的规则列表
+     * @return 规则列表
      */
     public List<FlinkRule> getRules() {
-        return ruleDao.selectActiveRules().stream().filter(Objects::nonNull).map(this::toFlinkSqlRule)
+        return ruleDao.selectActiveRules().stream().filter(Objects::nonNull).map(this::toFlinkRule)
                 .filter(rule -> StringUtils.isNotEmpty(rule.getExecutableSql())).collect(Collectors.toList());
+    }
+
+    /**
+     * 获取指定类别的规则列表
+     * 用于 Flink 任务提交
+     * @param category 规则类别
+     * @return 规则列表
+     */
+    public List<FlinkRule> getRules(Category category) {
+        return this.getRules().stream().filter(o -> category.equals(o.getCategory())).collect(Collectors.toList());
     }
 
     /**
@@ -60,27 +72,26 @@ public class RuleService {
      * rule.params 为 sql 模板参数
      * 通过 rule.params 与 feature.expression 生成可执行 sql
      */
-    private FlinkRule toFlinkSqlRule(Rule complianceRule) {
+    private FlinkRule toFlinkRule(Rule rule) {
         FlinkRule flinkRule = new FlinkRule();
-        flinkRule.setId(complianceRule.getId());
-        flinkRule.setCategoryId(complianceRule.getCategoryId());
-        flinkRule.setName(complianceRule.getCode());
-        flinkRule.setVersion(complianceRule.getVersion());
-        flinkRule.setParams(complianceRule.getParams());
-        flinkRule.setParamsDesc(complianceRule.getParamsDesc());
-        Category category = Category.getCategory(complianceRule.getCategoryId());
+        flinkRule.setId(rule.getId());
+        flinkRule.setCategoryId(rule.getCategoryId());
+        flinkRule.setName(rule.getCode());
+        flinkRule.setVersion(rule.getVersion());
+        flinkRule.setParams(rule.getParams());
+        flinkRule.setParamsDesc(rule.getParamsDesc());
+        Category category = Category.getCategory(rule.getCategoryId());
         flinkRule.setCategory(category);
         if (category != null) {
             flinkRule.setCategoryName(category.getName());
             flinkRule.setCategoryConfig(ConfigManager.getCategoryConfig(category));
         }
-        int sqlTemplateId = complianceRule.getSqlTemplateId();
+        int sqlTemplateId = rule.getSqlTemplateId();
         SqlTemplate feature = sqlTemplateDao.selectById(sqlTemplateId);
         if (Objects.isNull(feature)) {
-            log.error("rule without expression, ruleCode:{}", complianceRule.getCode());
+            log.error("rule without expression, ruleCode:{}", rule.getCode());
             return flinkRule;
         }
-
         String params = flinkRule.getParams();
         Map<String, Object> paramMap = GsonUtils.toMap(params);
         String executableSql = SqlUtils.getExecutableSql(feature.getExpression(), paramMap);

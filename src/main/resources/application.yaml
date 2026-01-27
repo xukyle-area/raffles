@@ -35,7 +35,6 @@ raffles:
     configs:
       calculate:
         enable: true
-        batch: false
         source:
           type: kafka
           kafka:

@@ -1,17 +1,17 @@
-package com.gantenx.raffles.sink;
+package com.gantenx.raffles.kafka;
 
-import lombok.extern.slf4j.Slf4j;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import com.gantenx.raffles.utils.GsonUtils;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class KafkaSender implements Serializable {
@@ -30,7 +30,8 @@ public class KafkaSender implements Serializable {
             String msg = GsonUtils.toJson(record);
             log.info("send record: {}", record.toString());
             ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, msg);
-            Callback callback = (metadata, e) -> log.info("send record exception: {}", Objects.isNull(e) ? "null" : e.getMessage());
+            Callback callback =
+                    (metadata, e) -> log.info("send record exception: {}", Objects.isNull(e) ? "null" : e.getMessage());
             KafkaProducer<String, String> producer = this.getKafkaProducer();
             producer.send(producerRecord, callback);
         } catch (Exception e) {

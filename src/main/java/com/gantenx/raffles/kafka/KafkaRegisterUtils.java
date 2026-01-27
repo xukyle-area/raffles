@@ -1,4 +1,4 @@
-package com.gantenx.raffles.source;
+package com.gantenx.raffles.kafka;
 
 import static org.apache.flink.table.api.Expressions.$;
 import java.io.Serializable;
@@ -22,7 +22,8 @@ import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import com.gantenx.raffles.utils.FlinkTypeUtils;
 
 
-public class FlinkKafkaRegister implements Serializable {
+@SuppressWarnings("deprecation")
+public class KafkaRegisterUtils implements Serializable {
 
     private static final long serialVersionUID = 3600595263156225931L;
 

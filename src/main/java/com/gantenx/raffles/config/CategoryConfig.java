@@ -15,10 +15,6 @@ public class CategoryConfig implements Serializable {
      */
     private boolean enable;
     /**
-     * 业务是否是批处理
-     */
-    private boolean isBatch;
-    /**
      * 业务 flink 的来源配置
      */
     private DataTypeConfig sourceConfig;

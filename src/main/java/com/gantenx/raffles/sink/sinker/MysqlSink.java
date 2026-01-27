@@ -1,4 +1,4 @@
-package com.gantenx.raffles.sink;
+package com.gantenx.raffles.sink.sinker;
 
 
 import org.apache.flink.table.api.Table;
@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class MysqlSink implements SinkService {
+public class MysqlSink extends AbstractSinker {
 
     @Override
     public DataType getDataType() {

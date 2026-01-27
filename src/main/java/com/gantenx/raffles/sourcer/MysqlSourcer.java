@@ -1,4 +1,4 @@
-package com.gantenx.raffles.source;
+package com.gantenx.raffles.sourcer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class MysqlSource implements SourceService {
+public class MysqlSourcer extends AbstractSourcer {
 
     @Autowired
     private TableDDLDao tableDDLDao;
