@@ -107,7 +107,7 @@ public class FlinkSubmitter {
 
         sourcer.source(rse, ste, sql);
         Table table = ste.sqlQuery(sql.getExecutableSql());
-        sinker.sink(ste, table, sql);
+        sinker.addSink(ste, table, sql);
 
         try (RestClusterClient<UUID> client = new RestClusterClient<>(config, UUID.randomUUID())) {
             CompletableFuture<JobID> completableFuture = client.submitJob(this.buildJobGraph(rse, config));

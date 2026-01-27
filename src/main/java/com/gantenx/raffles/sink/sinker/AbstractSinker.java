@@ -7,10 +7,10 @@ import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 
 public interface AbstractSinker {
-    
+
     public abstract DataType getDataType();
 
-    public abstract void sink(StreamTableEnvironment ste, Table table, FlinkRule rule);
+    public abstract void addSink(StreamTableEnvironment ste, Table table, FlinkRule rule);
 
     public default void checkType(CategoryConfig.DataTypeConfig sinkConfig) {
         if (!this.getDataType().equals(sinkConfig.getDataType())) {

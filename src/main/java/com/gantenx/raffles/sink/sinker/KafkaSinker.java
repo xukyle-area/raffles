@@ -20,12 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class KafkaSink implements AbstractSinker, Serializable {
+public class KafkaSinker implements AbstractSinker, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Map<Category, AbstractSinkBuilder> sinkMap = new HashMap<>();
 
-    public KafkaSink() {
+    public KafkaSinker() {
         sinkMap.put(Category.CALCULATE, new SimpleSinkBuilder<>(CalculateOutput.class));
     }
 
@@ -35,7 +35,7 @@ public class KafkaSink implements AbstractSinker, Serializable {
     }
 
     @Override
-    public void sink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
+    public void addSink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
         DataTypeConfig sinkConfig = rule.getCategoryConfig().getSinkConfig();
         this.checkType(sinkConfig);
         CategoryConfig.Kafka kafkaConfig = sinkConfig.getKafka();

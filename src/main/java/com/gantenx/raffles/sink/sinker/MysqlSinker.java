@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class MysqlSink implements AbstractSinker, Serializable {
+public class MysqlSinker implements AbstractSinker, Serializable {
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -21,7 +21,7 @@ public class MysqlSink implements AbstractSinker, Serializable {
     }
 
     @Override
-    public void sink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
+    public void addSink(StreamTableEnvironment ste, Table table, FlinkRule rule) {
         CategoryConfig categoryConfig = rule.getCategoryConfig();
         CategoryConfig.DataTypeConfig sinkConfig = categoryConfig.getSinkConfig();
         this.checkType(sinkConfig);
