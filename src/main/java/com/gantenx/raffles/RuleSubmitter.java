@@ -17,8 +17,8 @@ import com.gantenx.raffles.config.consists.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.service.RuleService;
 import com.gantenx.raffles.service.RuleStatusCache;
-import com.gantenx.raffles.sink.sinker.AbstractSinker;
-import com.gantenx.raffles.sourcer.AbstractSourcer;
+import com.gantenx.raffles.sink.adapter.SinkAdapter;
+import com.gantenx.raffles.source.adapter.SourceAdapter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,13 +35,13 @@ public class RuleSubmitter {
     ConfigManager configManager;
 
 
-    private final Map<Category, AbstractSourcer> sourceMap = new HashMap<>();
-    private final Map<Category, AbstractSinker> sinkMap = new HashMap<>();
+    private final Map<Category, SourceAdapter> sourceMap = new HashMap<>();
+    private final Map<Category, SinkAdapter> sinkMap = new HashMap<>();
 
     @Autowired
-    private void sourceAndSinkServices(Set<AbstractSourcer> sourcesSet, Set<AbstractSinker> sinksSet) {
-        Map<DataType, AbstractSourcer> sources = buildServiceMap(sourcesSet, AbstractSourcer::getDataType);
-        Map<DataType, AbstractSinker> sinks = buildServiceMap(sinksSet, AbstractSinker::getDataType);
+    private void sourceAndSinkServices(Set<SourceAdapter> sourcesSet, Set<SinkAdapter> sinksSet) {
+        Map<DataType, SourceAdapter> sources = buildServiceMap(sourcesSet, SourceAdapter::getDataType);
+        Map<DataType, SinkAdapter> sinks = buildServiceMap(sinksSet, SinkAdapter::getDataType);
 
         for (Category category : Category.values()) {
             CategoryConfig categoryConfig = configManager.getCategoryConfig(category);
@@ -110,8 +110,8 @@ public class RuleSubmitter {
             String savepoint = this.cancel(rule.getName());
             Category category = rule.getCategory();
 
-            AbstractSinker sink = sinkMap.get(category);
-            AbstractSourcer source = sourceMap.get(category);
+            SinkAdapter sink = sinkMap.get(category);
+            SourceAdapter source = sourceMap.get(category);
             if (sink == null || source == null) {
                 log.error("No sink or source configured for category: {}", category);
                 return;

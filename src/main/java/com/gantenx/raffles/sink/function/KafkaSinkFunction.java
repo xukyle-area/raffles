@@ -1,4 +1,4 @@
-package com.gantenx.raffles.sink;
+package com.gantenx.raffles.sink.function;
 
 import java.util.Map;
 import org.apache.commons.collections.MapUtils;
@@ -9,23 +9,27 @@ import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import com.gantenx.raffles.kafka.KafkaSender;
 import com.gantenx.raffles.model.FlinkRule;
-import com.gantenx.raffles.sink.builder.AbstractSinkBuilder;
+import com.gantenx.raffles.sink.mapper.RowToObjectMapper;
 import com.gantenx.raffles.utils.FlinkTypeUtils;
 import lombok.extern.slf4j.Slf4j;
 
-
+/**
+ * Kafka Sink Function实现
+ * 将Flink流数据写入Kafka
+ */
 @Slf4j
-public class Sinker implements SinkFunction<Tuple2<Boolean, Row>> {
+public class KafkaSinkFunction implements SinkFunction<Tuple2<Boolean, Row>> {
     private static final long serialVersionUID = 1243590888337448708L;
     private static final String TRANSACTION_SINK_ROW_KEY = "retractKey";
     private static final String IS_TO_UPDATE = "isToUpdate";
+
     private final KafkaSender kafkaSender;
     private final FlinkRule ruleFlinkSql;
-    private final AbstractSinkBuilder sinkBuilder;
+    private final RowToObjectMapper rowMapper;
 
-    public Sinker(FlinkRule rule, AbstractSinkBuilder sinkBuilder, String servers, String topic) {
+    public KafkaSinkFunction(FlinkRule rule, RowToObjectMapper rowMapper, String servers, String topic) {
         this.ruleFlinkSql = rule;
-        this.sinkBuilder = sinkBuilder;
+        this.rowMapper = rowMapper;
         this.kafkaSender = new KafkaSender(servers, topic);
     }
 
@@ -47,7 +51,7 @@ public class Sinker implements SinkFunction<Tuple2<Boolean, Row>> {
             } else {
                 return;
             }
-            Object record = sinkBuilder.buildSinkObject(rowMap, ruleFlinkSql);
+            Object record = rowMapper.buildObject(rowMap, ruleFlinkSql);
             kafkaSender.send(record);
         } catch (Exception e) {
             log.error("invoke {}", e.getMessage(), e);

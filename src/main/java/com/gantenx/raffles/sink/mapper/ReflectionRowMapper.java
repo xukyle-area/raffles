@@ -1,26 +1,29 @@
-package com.gantenx.raffles.sink.builder;
+package com.gantenx.raffles.sink.mapper;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Map;
 import com.gantenx.raffles.model.FlinkRule;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 基于反射的通用行数据映射器
+ * 通过反射动态设置对象字段值
+ */
 @Slf4j
-public class SimpleSinkBuilder<T> implements AbstractSinkBuilder, Serializable {
+public class ReflectionRowMapper<T> implements RowToObjectMapper {
     private static final long serialVersionUID = 1L;
 
     private final Class<T> outputClass;
 
-    public SimpleSinkBuilder(Class<T> outputClass) {
+    public ReflectionRowMapper(Class<T> outputClass) {
         this.outputClass = outputClass;
     }
 
     @Override
-    public Object buildSinkObject(Map<String, Object> item, FlinkRule rule) {
+    public Object buildObject(Map<String, Object> item, FlinkRule rule) {
         try {
             T output = outputClass.getDeclaredConstructor().newInstance();
-            // Dynamically set fields from map to object using reflection
+            // 动态设置字段值
             for (Map.Entry<String, Object> entry : item.entrySet()) {
                 String fieldName = entry.getKey();
                 Object value = entry.getValue();

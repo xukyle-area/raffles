@@ -1,7 +1,7 @@
-package com.gantenx.raffles.sourcer;
+package com.gantenx.raffles.source.adapter;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -20,9 +20,14 @@ import com.gantenx.raffles.utils.SQLTableExtractor;
 import com.gantenx.raffles.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * MySQL Source适配器
+ * 负责从MySQL注册数据源到Flink环境
+ */
 @Slf4j
 @Service
-public class MysqlSourcer implements AbstractSourcer, Serializable {
+public class MysqlSourceAdapter extends SourceAdapter {
+    private static final long serialVersionUID = 1L;
 
     @Autowired
     private TableDDLDao tableDDLDao;
@@ -40,9 +45,15 @@ public class MysqlSourcer implements AbstractSourcer, Serializable {
 
         String executableSql = rule.getExecutableSql();
         List<String> ddls = this.getDDLs(executableSql, sourceConfig.getMysql());
-        ddls.forEach(ste::executeSql);
+        ddls.forEach(ddl -> {
+            log.info("Executing MySQL DDL: {}", ddl);
+            ste.executeSql(ddl);
+        });
     }
 
+    /**
+     * 获取MySQL表的DDL语句列表
+     */
     public List<String> getDDLs(@Nonnull String executableSql, CategoryConfig.Mysql mysqlConfig) {
         List<String> ddls = new ArrayList<>();
         List<String> tableNames = new ArrayList<>(SQLTableExtractor.extractExternalTables(executableSql));
@@ -50,8 +61,19 @@ public class MysqlSourcer implements AbstractSourcer, Serializable {
         List<FlinkTableDDL> ddlList = tableDDLDao.selectByNames(tableNames);
 
         for (FlinkTableDDL table : ddlList) {
-            Map<String, Object> paramMap = GsonUtils.toMap(table.getParams());
+            Map<String, Object> paramMap = new HashMap<>();
+
+            // 如果表有自己的参数配置，先加载
+            if (table.getParams() != null && !table.getParams().trim().isEmpty()) {
+                Map<String, Object> tableParams = GsonUtils.toMap(table.getParams());
+                if (tableParams != null) {
+                    paramMap.putAll(tableParams);
+                }
+            }
+
+            // MySQL 配置覆盖表参数
             paramMap.putAll(mysqlParamMap);
+
             ddls.add(SqlUtils.getExecutableSql(table.getDdlSql(), paramMap));
         }
         return ddls;

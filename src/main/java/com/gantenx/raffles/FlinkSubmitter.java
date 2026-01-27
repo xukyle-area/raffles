@@ -34,8 +34,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.FlinkConfig;
 import com.gantenx.raffles.model.FlinkRule;
-import com.gantenx.raffles.sink.sinker.AbstractSinker;
-import com.gantenx.raffles.sourcer.AbstractSourcer;
+import com.gantenx.raffles.sink.adapter.SinkAdapter;
+import com.gantenx.raffles.source.adapter.SourceAdapter;
 import com.gantenx.raffles.utils.FileListing;
 import lombok.extern.slf4j.Slf4j;
 
@@ -99,15 +99,14 @@ public class FlinkSubmitter {
      * @param sinker        自定义注册sink
      * @param sourcer       自定义注册数据源
      */
-    public boolean submit(FlinkRule sql, @Nullable String savepointPath, AbstractSinker sinker,
-            AbstractSourcer sourcer) {
+    public boolean submit(FlinkRule sql, @Nullable String savepointPath, SinkAdapter sinker, SourceAdapter sourcer) {
         Configuration config = this.buildConfiguration(sql.getName(), savepointPath);
         RemoteStreamEnvironment rse = this.buildRSE(config);
         StreamTableEnvironment ste = StreamTableEnvironment.create(rse, EnvironmentSettings.newInstance().build());
 
         sourcer.source(rse, ste, sql);
         Table table = ste.sqlQuery(sql.getExecutableSql());
-        sinker.addSink(ste, table, sql);
+        sinker.sink(ste, table, sql);
 
         try (RestClusterClient<UUID> client = new RestClusterClient<>(config, UUID.randomUUID())) {
             CompletableFuture<JobID> completableFuture = client.submitJob(this.buildJobGraph(rse, config));
