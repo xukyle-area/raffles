@@ -44,10 +44,30 @@ CREATE TABLE IF NOT EXISTS `flink_table_ddl` (
     UNIQUE KEY `uk_table_name` (`table_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Flink表DDL配置';
 
--- 插入示例数据（可选）
--- INSERT INTO sql_template (expression, `desc`) VALUES 
--- ('SELECT * FROM source WHERE id = #{id}', '基础查询模板'),
--- ('SELECT COUNT(*) FROM source WHERE status = #{status}', '统计查询模板');
+-- 插入 Flink 表 DDL（输入表和输出表）
+INSERT INTO flink_table_ddl (table_name, `desc`, ddl_sql) VALUES
+('calculate_input', '计算输入表', 
+'CREATE TABLE calculate_input (
+    numberFirst INT,
+    numberSecond INT,
+    proc_time AS PROCTIME()
+) WITH (
+    ''connector'' = ''kafka'',
+    ''topic'' = ''calculate-input'',
+    ''properties.bootstrap.servers'' = ''localhost:9092'',
+    ''properties.group.id'' = ''calculate-group'',
+    ''scan.startup.mode'' = ''latest-offset'',
+    ''format'' = ''json''
+)');
 
--- INSERT INTO rule (category_id, code, sql_template_id, params, params_desc, version, status) VALUES
--- (1, 'RULE_001', 1, '{"id": 1}', '测试规则1', 1, 1);
+-- 插入 SQL 模板（计算规则）
+INSERT INTO sql_template (expression, `desc`) VALUES
+('SELECT 
+    numberFirst * numberSecond AS multiplyResult,
+    numberFirst + numberSecond AS addResult
+FROM calculate_input', 
+'计算乘法和加法结果');
+
+-- 插入规则（关联模板和参数）
+INSERT INTO rule (category_id, code, sql_template_id, params, params_desc, version, status) VALUES
+(1, 'CALCULATE_DEMO', 1, '{}', '数字计算演示：加法和乘法', 1, 1);
