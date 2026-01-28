@@ -3,6 +3,8 @@
 set -e
 
 JAR_NAME="raffles-1.0-SNAPSHOT.jar"
+THIN_JAR_NAME="raffles-1.0-SNAPSHOT.jar.original" 
+
 JAR_PATH="target/${JAR_NAME}"
 LIB_DIR="target/classes/lib"
 LIB_TARGET_DIR="target/lib"
@@ -33,7 +35,7 @@ else
         mvn clean package -DskipTests
 fi
 
-# 2. 确保主程序jar和依赖jar复制到 target/lib
+# 2. 确保主程序jar和thin jar及依赖jar复制到 target/lib
 mkdir -p "$LIB_TARGET_DIR"
 if [ -f "$JAR_PATH" ]; then
     cp "$JAR_PATH" "$LIB_TARGET_DIR/"
@@ -41,6 +43,12 @@ if [ -f "$JAR_PATH" ]; then
 else
     echo "未找到 $JAR_PATH，构建失败或路径错误。"
     exit 1
+fi
+if [ -f "target/$THIN_JAR_NAME" ]; then
+    cp "target/$THIN_JAR_NAME" "$LIB_TARGET_DIR/raffles-1.0-SNAPSHOT-thin.jar"
+    echo "已复制 thin jar $THIN_JAR_NAME 到 $LIB_TARGET_DIR/raffles-1.0-SNAPSHOT-thin.jar"
+else
+    echo "未找到 thin jar $THIN_JAR_NAME，跳过。"
 fi
 # 2.1 复制所有依赖jar到 target/lib
 if [ -d "$LIB_DIR" ]; then
