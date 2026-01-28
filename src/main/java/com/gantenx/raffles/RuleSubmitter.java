@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.ConfigManager;
-import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.enums.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.service.RuleService;
 import com.gantenx.raffles.service.RuleStatusCache;
@@ -40,8 +40,8 @@ public class RuleSubmitter {
 
     @Autowired
     private void sourceAndSinkServices(Set<SourceAdapter> sourcesSet, Set<SinkAdapter> sinksSet) {
-        Map<DataType, SourceAdapter> sources = buildServiceMap(sourcesSet, SourceAdapter::getDataType);
-        Map<DataType, SinkAdapter> sinks = buildServiceMap(sinksSet, SinkAdapter::getDataType);
+        Map<DataType, SourceAdapter> sources = this.buildServiceMap(sourcesSet, SourceAdapter::getDataType);
+        Map<DataType, SinkAdapter> sinks = this.buildServiceMap(sinksSet, SinkAdapter::getDataType);
 
         for (Category category : Category.values()) {
             CategoryConfig categoryConfig = configManager.getCategoryConfig(category);

@@ -1,4 +1,4 @@
-package com.gantenx.raffles.config.consists;
+package com.gantenx.raffles.enums;
 
 public enum DataType {
     KAFKA("kafka"), MYSQL("mysql");

@@ -4,7 +4,7 @@ import java.io.Serializable;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import com.gantenx.raffles.config.CategoryConfig;
-import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.enums.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 
 /**

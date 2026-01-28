@@ -1,7 +1,7 @@
 package com.gantenx.raffles.config;
 
 import java.io.Serializable;
-import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.enums.DataType;
 import lombok.Data;
 
 @Data

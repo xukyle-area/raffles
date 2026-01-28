@@ -10,7 +10,7 @@ import com.gantenx.raffles.config.Category;
 import com.gantenx.raffles.config.CategoryConfig;
 import com.gantenx.raffles.config.CategoryConfig.DataTypeConfig;
 import com.gantenx.raffles.config.calculate.CalculateOutput;
-import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.enums.DataType;
 import com.gantenx.raffles.model.FlinkRule;
 import com.gantenx.raffles.sink.function.KafkaSinkFunction;
 import com.gantenx.raffles.sink.mapper.ReflectionRowMapper;

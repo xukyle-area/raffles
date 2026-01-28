@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import com.gantenx.raffles.config.consists.DataType;
+import com.gantenx.raffles.enums.DataType;
 import lombok.Data;
 
 /**
