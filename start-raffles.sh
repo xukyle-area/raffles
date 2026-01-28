@@ -51,5 +51,4 @@ else
 fi
 
 # 3. 启动服务
-cd target
-java -jar "lib/$JAR_NAME" "$@"
+java -jar "target/$JAR_NAME" "$@"
