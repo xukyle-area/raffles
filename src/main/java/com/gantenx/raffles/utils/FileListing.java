@@ -13,15 +13,14 @@ public class FileListing {
     public static List<String> getFlinkJars() {
         List<String> jars = new ArrayList<>();
         // 1. 加入主程序JAR
-        File mainJar = new File("target/raffles-1.0-SNAPSHOT.jar");
-        if (mainJar.exists())
-            jars.add(mainJar.getAbsolutePath());
         // 2. 加入lib目录下所有JAR
         File libDir = new File("target/lib");
         if (libDir.exists() && libDir.isDirectory()) {
             for (File f : libDir.listFiles((dir, name) -> name.endsWith(".jar"))) {
                 jars.add(f.getAbsolutePath());
             }
+        } else {
+            log.error("Lib directory not found: {}", libDir.getAbsolutePath());
         }
         jars.forEach(j -> log.info("lunching jar: {}", j));
         return jars;
