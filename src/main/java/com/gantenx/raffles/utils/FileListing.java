@@ -10,36 +10,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FileListing {
 
-
-    // 在FlinkSubmitter类中修改JAR_FILES的初始化
-    public static final List<String> getFlinkJars() {
+    public static List<String> getFlinkJars() {
         List<String> jars = new ArrayList<>();
-
-        // 优先从环境变量读取目录
-        String flinkLibsDir = System.getenv("FLINK_LIBS_DIR");
-        if (flinkLibsDir == null) {
-            flinkLibsDir = System.getProperty("flink.libs.dir", "lib");
-        }
-
-        File libDir = new File(flinkLibsDir);
+        // 1. 加入主程序JAR
+        File mainJar = new File("target/raffles-1.0-SNAPSHOT.jar");
+        if (mainJar.exists())
+            jars.add(mainJar.getAbsolutePath());
+        // 2. 加入lib目录下所有JAR
+        File libDir = new File("target/lib");
         if (libDir.exists() && libDir.isDirectory()) {
-            File[] jarFiles = libDir.listFiles((dir, name) -> name.endsWith(".jar"));
-            if (jarFiles != null) {
-                for (File jar : jarFiles) {
-                    jars.add(jar.getAbsolutePath());
-                }
+            for (File f : libDir.listFiles((dir, name) -> name.endsWith(".jar"))) {
+                jars.add(f.getAbsolutePath());
             }
-            log.info("Loaded {} JAR files from directory: {}", jars.size(), flinkLibsDir);
-        } else {
-            log.warn("Flink libs directory not found: {}", flinkLibsDir);
-            // 回退到原来的方式
-            jars = FileListing.getPaths("lib");
         }
-        log.info("Flink JAR files: {}", jars);
-
         return jars;
     }
-
 
     /**
      * 获取指定路径下的文件列表

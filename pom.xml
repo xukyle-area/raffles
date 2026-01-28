@@ -229,17 +229,11 @@
                         </goals>
                         <configuration>
                             <target>
-                                <!-- 复制原始的thin jar -->
+                                <!-- 复制原始的thin jar到 target/lib -->
                                 <copy
                                     file="${project.build.directory}/${project.artifactId}-${project.version}.jar.original"
-                                    tofile="${project.build.outputDirectory}/lib/${project.artifactId}-${project.version}.jar"
+                                    tofile="${project.build.directory}/classes/lib/${project.artifactId}.jar"
                                     failonerror="true" />
-                                <!-- 如果没有.original文件，则复制普通的jar -->
-                                <copy
-                                    file="${project.build.directory}/${project.artifactId}-${project.version}.jar"
-                                    tofile="${project.build.outputDirectory}/lib/${project.artifactId}-${project.version}.jar"
-                                    failonerror="false"
-                                    overwrite="false" />
                             </target>
                         </configuration>
                     </execution>
