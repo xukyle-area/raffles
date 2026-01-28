@@ -16,7 +16,7 @@ public class Scheduler {
     @Autowired
     private RuleSubmitter ruleSubmitter;
 
-    @Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0 0/2 * * * ?")
     public void submitCalculate() {
         log.info("Starting scheduled Flink job submission...");
         ruleSubmitter.submit(Category.CALCULATE);

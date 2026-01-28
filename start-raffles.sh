@@ -10,30 +10,7 @@ THIN_JAR_PATH="target/${THIN_JAR_NAME}"
 LIB_DIR="target/classes/lib"
 LIB_TARGET_DIR="target/lib"
 
-# 解析 commit message 参数
-COMMIT_MSG="Auto commit before restarting raffles"
-while getopts "m:" opt; do
-    case $opt in
-    m)
-      COMMIT_MSG="$OPTARG"
-      ;;
-    *)
-      echo "用法: $0 [-m commit_message]"
-      exit 1
-      ;;
-  esac
-done
-shift $((OPTIND-1))
-
-# 检查代码变动并构建
-if git diff --quiet && git diff --staged --quiet; then
-  echo "代码没有变动，跳过构建步骤。"
-else
-  echo "检测到代码变动，开始构建..."
-  git add .
-  git commit -m "$COMMIT_MSG"
-  mvn clean package -DskipTests
-fi
+mvn clean package -DskipTests
 
 # 准备 lib 目录
 mkdir -p "$LIB_TARGET_DIR"

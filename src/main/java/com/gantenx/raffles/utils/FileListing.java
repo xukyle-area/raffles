@@ -12,8 +12,6 @@ public class FileListing {
 
     public static List<String> getFlinkJars() {
         List<String> jars = new ArrayList<>();
-        // 1. 加入主程序JAR
-        // 2. 加入lib目录下所有JAR
         File libDir = new File("target/lib");
         if (libDir.exists() && libDir.isDirectory()) {
             for (File f : libDir.listFiles((dir, name) -> name.endsWith(".jar"))) {

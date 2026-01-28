@@ -86,7 +86,7 @@ public class RuleSubmitter {
         // 获取当前正在运行的任务名称列表
         Set<String> actives =
                 flinkSubmitter.getActiveJobs().stream().map(JobStatusMessage::getJobName).collect(Collectors.toSet());;
-
+        log.info("Active jobs: {}", actives);
         for (FlinkRule rule : rules) {
             // 批处理任务无需关心规则是否变更或者在运行中，每次都从头运行
             // 任务没有在运行中，需要提交。或者
