@@ -23,6 +23,7 @@ public class FileListing {
                 jars.add(f.getAbsolutePath());
             }
         }
+        jars.forEach(j -> log.info("lunching jar: {}", j));
         return jars;
     }
 
